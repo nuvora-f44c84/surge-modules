@@ -3,18 +3,22 @@
 模块地址：
 https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Douban-Splash-AdBlock.sgmodule
 
-范围：仅处理 api.douban.com/v2/app_ads/splash 与 splash_preload。
+范围：仅处理 api.douban.com/v2/app_ads/splash、splash_preload 与 splash_show。
 需要 Surge iOS 5.14.0+、重写功能、MITM，以及已安装并完全信任的 Surge CA。
 MITM 增加的唯一主机是 api.douban.com；同一主机的其他路径仍会被解密，但不被本模块改写。
 不修改 frodo.douban.com，不封锁 API、图片或视频域名，不处理信息流广告。
 
-原理：把返回 JSON 顶层的 ads 数组清空，并把已存在的 preload_ids 设为 null。
-其他字段保留。未知结构、无 ads 数组的错误响应原样通过。
+原理：预加载接口清空顶层 ads 数组，把已存在的 preload_ids 设为 null、preload_uniq_ids 设为空数组。
+展示接口 splash_show 清空 ad_info，以及已存在的预加载、备用广告对象和 ID；
+清空 sdk_info 与 ad_bid_info，保留其原有的 JSON 字符串或容器类型，避免继续通过 SDK 竞价取广告。
+其他字段保留。未知结构和未包含预期广告字段的错误响应原样通过。
 使用 Surge 内置 JQ Body Rewrite，无远程脚本依赖。
+
+0.2.0 补充 splash_show 展示接口与 preload_uniq_ids；仅清空预加载列表不足以覆盖直接下发的开屏广告。
 
 验证方法与限制
 使用合成 JSON 检查字段保留、未知结构和重复执行；运行 python3 tests/test_douban_splash.py。
-在目标设备确认规则命中后，分别检查首页、搜索和详情页等正常功能。
+在目标设备确认 splash_preload 与 splash_show 规则命中后，分别检查冷启动、首页、搜索和详情页等正常功能。
 缓存、App 版本和广告投放方式可能影响效果；规则覆盖不代表所有入口都有效。
 
 缓存与恢复：

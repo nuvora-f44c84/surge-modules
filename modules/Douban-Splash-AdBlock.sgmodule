@@ -1,13 +1,15 @@
 #!name=豆瓣开屏广告过滤
-#!desc=仅清空豆瓣开屏接口的广告列表；需 Surge iOS 5.14.0+，开启重写与 MITM 并信任证书。只解密 api.douban.com。已缓存广告可能需要后续启动才消失。
-#!version=0.1.0
+#!desc=清空豆瓣开屏预加载与展示接口的广告；需 Surge iOS 5.14.0+，开启重写与 MITM 并信任证书。只解密 api.douban.com。已缓存广告可能需要后续启动才消失。
+#!version=0.2.0
 #!homepage=https://github.com/nuvora-f44c84/surge-modules
 
-# 兼容 /v2/app_ads/splash 与 /v2/app_ads/splash_preload 开屏接口。
-# 仅修改顶层 ads 数组与已存在的 preload_ids；未知结构原样通过。
+# 兼容 /v2/app_ads/splash、splash_preload 与 splash_show 开屏接口。
+# 清空预加载列表、展示对象、备用广告及 SDK 竞价数据；未知结构原样通过。
 # 不包含外部脚本、不封锁整个 API 主机，不解密 frodo.douban.com。
 [Body Rewrite]
-http-response-jq ^https://api\.douban\.com/v2/app_ads/splash(?:_preload)?/?(?:\?.*)?$ 'if type == "object" then if (.ads | type) == "array" then .ads = [] | if has("preload_ids") then .preload_ids = null else . end else . end else . end'
+http-response-jq ^https://api\.douban\.com/v2/app_ads/splash(?:_preload)?/?(?:\?.*)?$ 'if type == "object" then if (.ads | type) == "array" then .ads = [] | if has("preload_ids") then .preload_ids = null else . end | if has("preload_uniq_ids") then .preload_uniq_ids = [] else . end else . end else . end'
+# sdk_info / ad_bid_info 可为 JSON 字符串；保持原来的字符串或容器类型。
+http-response-jq ^https://api\.douban\.com/v2/app_ads/splash_show/?(?:\?.*)?$ 'if type == "object" then if has("ad_info") and ((.ad_info | type) == "object" or .ad_info == null) then reduce ["ad_info", "preload_ad_id", "preload_ad_info", "backup_ad_id", "backup_ad_info"][] as $key (.; if has($key) then .[$key] = null else . end) | if has("sdk_info") then if (.sdk_info | type) == "string" then .sdk_info = "[]" elif (.sdk_info | type) == "array" then .sdk_info = [] else . end else . end | if has("ad_bid_info") then if (.ad_bid_info | type) == "string" then .ad_bid_info = "{}" elif (.ad_bid_info | type) == "object" then .ad_bid_info = {} else . end else . end else . end else . end'
 
 [MITM]
 hostname = %APPEND% api.douban.com
