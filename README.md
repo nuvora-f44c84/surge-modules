@@ -13,6 +13,7 @@
 | 咪咕视频 · 广告域名补充 | 0.1.0 · 6 个精确域名，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/MiguVideo-AdBlock-Lite.sgmodule) |
 | 航旅纵横 · 轻量去广告 | 0.1.0 · 已知开屏接口及广告请求标识，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Umetrip-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
+| 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 
 ## Cloudflare 一键优选（预览版）
 
@@ -75,6 +76,14 @@
 X 模块及其专用实现已从当前分支移除，旧 Raw 地址不再提供模块。远端删除不会自动卸载本地副本，已有安装应在 Surge 中手动停用或删除。
 
 X 实验模块存在加载兼容性问题。网页版过滤规则和 App 内修改方案不能直接证明 Surge 对官方 X App 的适用性；本仓库不再提供 X 去广告模块。详见[说明](docs/x-ad-filter.txt)。
+
+## 天气 · 美标 AQI（iRingo）
+
+基于 NSRingo WeatherKit v3.3.2，将默认空气质量算法设为 `WAQI_InstantCast_US`；使用所在位置的污染物数据，按美标 InstantCast 计算 AQI。天气、降水、预警数据源和模块自带规则沿用上游默认值。JS 直接引用官方版本化发布文件，无需本地脚本。
+
+从固定 Raw 地址安装后，停用原 WeatherKit 模块及其他同类天气修复模块，再启用本模块；它是完整替换版，不是叠加补丁。需要既有重写、脚本和 MITM 支持。当前版本已通过配置语法和算法离线验证，手机安装后的完整运行仍需检查，发布不会自动切换设备配置。
+
+安装、数据口径、内置规则范围与验证方法见[美标天气说明](docs/iringo-weather-us.md)。
 
 ## 目录与维护
 
