@@ -1,0 +1,25 @@
+#!name=定位 · 地区检测（iRingo）
+#!desc=0.1.0 测试版。仅改写 Apple 网络地区检测，默认 US；引用官方 LocationServices v1.0.1 远程脚本。需脚本和 MITM 支持，安装时停用其他同类定位模块。
+#!author=VirgilClyne[https://github.com/VirgilClyne]
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/iringo-location-service.md
+#!category= iRingo
+#!version=0.1.0
+#!arguments=GeoCountryCode:US,LogLevel:WARN
+#!arguments-desc=GeoCountryCode：Apple 网络地区检测的目标国家或地区代码，默认 US；LogLevel：脚本日志等级，默认 WARN。
+
+# SPDX-License-Identifier: Apache-2.0
+# Based on NSRingo/LocationServices v1.0.1, limited to /pep/gcc.
+# https://github.com/NSRingo/LocationServices/releases/tag/v1.0.1
+# The official response script is fetched remotely without modifications.
+# Dispatcher hybrid handling is disabled and no Dispatcher rules are added.
+# License: ../LICENSES/Apache-2.0.txt
+# Installation and scope: ../docs/iringo-location-service.md
+
+[Rule]
+DOMAIN,gspe1-ssl.ls.apple.com,DIRECT
+
+[Script]
+📍 LocationService.pep.gcc.response = type=http-response,pattern=^https?:\/\/gspe1-ssl\.ls\.apple\.com\/pep\/gcc,requires-body=1,script-path=https://github.com/NSRingo/LocationServices/releases/download/v1.0.1/response.bundle.js,argument=GeoCountryCode={{{GeoCountryCode}}}&Dispatcher.Hybrid=false&LogLevel={{{LogLevel}}}
+
+[MITM]
+hostname = %APPEND% gspe1-ssl.ls.apple.com

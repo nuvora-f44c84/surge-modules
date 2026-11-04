@@ -14,6 +14,7 @@
 | 航旅纵横 · 轻量去广告 | 0.1.0 · 已知开屏接口及广告请求标识，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Umetrip-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
+| 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
 
 ## Cloudflare 一键优选（预览版）
 
@@ -84,6 +85,12 @@ X 实验模块存在加载兼容性问题。网页版过滤规则和 App 内修�
 从固定 Raw 地址安装后，停用原 WeatherKit 模块及其他同类天气修复模块，再启用本模块；它是完整替换版，不是叠加补丁。需要既有重写、脚本和 MITM 支持。当前版本已通过配置语法和算法离线验证，手机安装后的完整运行仍需检查，发布不会自动切换设备配置。
 
 安装、数据口径、内置规则范围与验证方法见[美标天气说明](docs/iringo-weather-us.md)。
+
+## 定位 · 地区检测（iRingo）
+
+仅处理 Apple `/pep/gcc` 网络地区检测，默认返回 `US`，使用 NSRingo LocationServices v1.0.1 官方远程脚本。保留单一主机的 DIRECT 规则和 MITM；不启用 Dispatcher 混合处理，不调整地图、天气参数或其他分流。
+
+安装时停用其他处理同一接口的定位模块，确认实际请求返回预期地区后再移除旧本地文件。该网络地区信号不等于 GPS、SIM 或 Apple 账号地区，也不能保证全部地区功能解锁。范围、安装和验证见[定位地区检测说明](docs/iringo-location-service.md)。
 
 ## 目录与维护
 
