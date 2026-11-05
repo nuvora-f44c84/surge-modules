@@ -1,6 +1,6 @@
 # Surge 模块
 
-个人维护的 Surge 模块与补充规则集。远程模块放在 `modules/`，远程规则集放在 `rules/`。
+个人维护的 Surge 模块、补充规则集与面板脚本。远程模块放在 `modules/`，远程规则集放在 `rules/`，远程脚本放在 `scripts/`。
 
 ## 模块列表
 
@@ -19,6 +19,10 @@
 ## AI 专用域名补充规则集
 
 [AI-Supplement.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI-Supplement.list) 包含 197 条 AI 服务域名规则，用于补充主列表。通过主配置的 `RULE-SET` 引用并指定已有策略组；不在模块页面安装，也不包含节点或脚本。保留局域网、国内 AI 等前置规则及既有分流顺序。由本仓库人工维护，不自动合并上游。安装、范围与来源见 [AI 补充规则说明](docs/ai-supplement.md)。
+
+## VPS 简洁流量面板脚本
+
+[VPS-TrafficPanel.js 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/VPS-TrafficPanel.js) 支持多个面板共用同一远程脚本，分别传入监控地址、配额、重置日和请求策略。只显示流量、监控请求延时及重置天数，不添加分流规则。私人接口地址保留在本机参数中。引用方式、数据口径和限制见 [VPS 面板说明](docs/vps-traffic-panel.md)。
 
 ## Cloudflare 一键优选（预览版）
 
