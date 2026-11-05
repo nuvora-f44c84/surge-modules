@@ -1,6 +1,6 @@
 # Surge 模块
 
-个人维护的 Surge 模块集合。远程模块统一放在 `modules/`，后续模块也放在这里。
+个人维护的 Surge 模块与补充规则集。远程模块放在 `modules/`，远程规则集放在 `rules/`。
 
 ## 模块列表
 
@@ -15,6 +15,10 @@
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
+
+## AI 专用域名补充规则集
+
+[AI-Supplement.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI-Supplement.list) 包含 197 条 AI 服务域名规则，用于补充主列表。通过主配置的 `RULE-SET` 引用并指定已有策略组；不在模块页面安装，也不包含节点或脚本。保留局域网、国内 AI 等前置规则及既有分流顺序。由本仓库人工维护，不自动合并上游。安装、范围与来源见 [AI 补充规则说明](docs/ai-supplement.md)。
 
 ## Cloudflare 一键优选（预览版）
 
@@ -96,6 +100,7 @@ X 实验模块存在加载兼容性问题。网页版过滤规则和 App 内修�
 
 ```text
 modules/   远程发布的 Surge 模块
+rules/     远程发布的 Surge 规则集
 src/       模块源代码
 scripts/   构建脚本，以及 CF-AutoRank.js 远程运行文件
 tests/     各模块自动化检查（CF 测试位于 cf-autorank/）
