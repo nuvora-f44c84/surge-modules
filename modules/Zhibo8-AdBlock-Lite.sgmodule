@@ -1,0 +1,20 @@
+#!name=直播吧 · 广告域名补充
+#!desc=0.1.0 测试版。拦截 4 个广告/统计域名及 1 个 IP；无需 MITM 或脚本。其中 tanx.com 与 mssdk.volces.com 为跨 App 通用 SDK 域名，启用后对所有 App 生效。
+#!version=0.1.0
+#!category=去广告
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/zhibo8-adblock.md
+
+# Domain and IP rules only; no MITM, rewrite or script.
+# bifen3.qiumibao.com and img1.360buyimg.com are intentionally NOT blocked:
+# they may serve normal scores/images alongside ads.
+# Scope and rollback: docs/zhibo8-adblock.md
+
+[Rule]
+# Zhibo8 ad delivery and statistics
+DOMAIN-SUFFIX,ggck.qiumibao.com,REJECT
+DOMAIN-SUFFIX,tongji.qiumibao.com,REJECT
+IP-CIDR,47.111.8.123/32,REJECT,no-resolve
+
+# Shared third-party SDKs (affect every app that uses them)
+DOMAIN-SUFFIX,mssdk.volces.com,REJECT
+DOMAIN-SUFFIX,tanx.com,REJECT
