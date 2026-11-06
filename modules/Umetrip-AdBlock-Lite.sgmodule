@@ -1,19 +1,17 @@
 #!name=航旅纵横 · 去广告
-#!desc=0.2.0 测试版。拦截统计域名与开屏接口，精简首页及我的页面推广；引用上游远程二进制响应脚本（webview 引擎）。需重写、脚本、MITM 和已信任证书；先停用其他航旅过滤模块。
+#!desc=0.2.1 测试版。拦截统计域名与开屏接口，精简首页及我的页面推广；响应脚本锁定上游固定提交（webview 引擎）。需重写、脚本、MITM 和已信任证书；先停用其他航旅过滤模块。
 #!author=杏九[https://github.com/xingjiu29]
 #!icon=https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/da/75/f6/da75f662-e6f4-20db-777b-a047ca7dd497/AppIcon-0-0-1x_U007emarketing-0-7-0-85-220.png/512x512bb.jpg
-#!version=0.2.0
+#!version=0.2.1
 #!category=去广告
 #!homepage=https://github.com/nuvora-f44c84/surge-modules
 
-# SPDX-License-Identifier: GPL-3.0-only
-# Converted for Surge from xingjiu29/Umetrip (referencing zirawell/Ad-Cleaner):
-# https://raw.githubusercontent.com/xingjiu29/Umetrip/refs/heads/main/umetrip.plugin
-# https://github.com/zirawell/Ad-Cleaner
-# Upstream response script is fetched remotely from main without copying or modification;
-# engine=webview is enabled for TextDecoder and binary Protobuf handling.
+# Surge format conversion of xingjiu29/Umetrip umetrip.plugin (upstream credits zirawell/Ad-Cleaner).
+# Upstream declares no license; this file does not relicense the upstream work.
+# Response script is pinned to an audited upstream commit and fetched unmodified:
+# https://github.com/xingjiu29/Umetrip/tree/d794d34b3718c24692befe0f7a4b139a2070aa81
+# Updating the pin requires re-reviewing the script; see docs/lite-adblocks.md.
 # Do not enable another Umetrip cleanup module at the same time.
-# Scope, upstream attribution and license: docs/lite-adblocks.md
 
 [Rule]
 DOMAIN,sensors.umetrip.com.cn,REJECT
@@ -26,7 +24,7 @@ DOMAIN,analytics.umetrip.com,REJECT
 ^https?://oss\.umetrip\.com/fs/advert/polite(?:[/?]|$) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 [Script]
-umetrip-adblock-response = type=http-response,pattern=(?i)^https?:\/\/(?:bkclient|umerp|home|umehome|sns|appmsg)\.umetrip\.com(?:\.cn)?\/gateway\/api\/umetrip\/native(?:\?.*)?$,requires-body=true,binary-body-mode=true,max-size=524288,timeout=30,engine=webview,script-path=https://raw.githubusercontent.com/xingjiu29/Umetrip/refs/heads/main/umetrip.js
+umetrip-adblock-response = type=http-response,pattern=(?i)^https?:\/\/(?:bkclient|umerp|home|umehome|sns|appmsg)\.umetrip\.com(?:\.cn)?\/gateway\/api\/umetrip\/native(?:\?.*)?$,requires-body=true,binary-body-mode=true,max-size=524288,timeout=30,engine=webview,script-path=https://raw.githubusercontent.com/xingjiu29/Umetrip/d794d34b3718c24692befe0f7a4b139a2070aa81/umetrip.js
 
 [MITM]
 hostname = %APPEND% umerp.umetrip.com, umerp.umetrip.com.cn, home.umetrip.com, bkclient.umetrip.com.cn, discardrp.umetrip.com, startup.umetrip.com, oss.umetrip.com, umehome.umetrip.com, sns.umetrip.com, appmsg.umetrip.com

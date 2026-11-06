@@ -11,7 +11,7 @@
 | 豆瓣开屏广告过滤 | 0.2.0 · 预加载与展示接口 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Douban-Splash-AdBlock.sgmodule) |
 | 小宇宙广告过滤 | 0.2.0 · 开屏及首页明确标记的推广横幅 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Xiaoyuzhou-Splash-AdBlock.sgmodule) |
 | 咪咕视频 · 广告域名补充 | 0.1.0 · 6 个精确域名，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/MiguVideo-AdBlock-Lite.sgmodule) |
-| 航旅纵横 · 去广告 | 0.2.0 · 开屏拦截、精简首页与我的页面，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Umetrip-AdBlock-Lite.sgmodule) |
+| 航旅纵横 · 去广告 | 0.2.1 · 开屏拦截、精简首页与我的页面，上游脚本锁定提交，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Umetrip-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
@@ -68,7 +68,7 @@
 
 咪咕模块精确拦截 6 个域名，无需 MITM 或脚本；其中 `ggx05.miguvideo.com` 为实验候选，不保证移除所有广告或品牌倒计时。
 
-航旅模块 `0.2.0` 拦截统计域名与开屏接口，并通过 `webview` 引擎及二进制模式调用上游 `xingjiu29/Umetrip` 远程响应脚本精简首页与“我的”页面推广。需要重写、脚本、MITM 和已信任证书；已安装旧版的设备可直接在 Surge 中更新同一模块。当前 App 的完整兼容性待实机验证。
+航旅模块 `0.2.1` 拦截统计域名与开屏接口，并通过 `webview` 引擎及二进制模式运行上游 `xingjiu29/Umetrip` 的响应脚本，精简首页与“我的”页面推广。脚本锁定在已审阅的上游提交，不跟随分支自动变化。需要重写、脚本、MITM 和已信任证书；不再覆盖 0.1.0 处理的 `114.115.217.129` 端点。上游未声明许可，本仓库不对该模块声明许可。当前 App 的完整兼容性待实机验证。
 
 两个模块均提供固定远程地址。迁移时停用同名本地模块，再启用远程版本；不要同时启用两份。安装链接（含镜像）、影响范围、上游来源和回退方法见[去广告模块说明](docs/lite-adblocks.md)。
 

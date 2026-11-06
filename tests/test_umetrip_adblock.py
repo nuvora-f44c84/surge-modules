@@ -27,7 +27,8 @@ for raw_line in module_text.splitlines():
         assert section is not None, f"Line outside section: {line}"
         sections[section].append(line)
 
-assert metadata["version"] == "0.2.0"
+assert metadata["version"] == "0.2.1"
+assert "SPDX-License-Identifier" not in module_text
 assert "loon_version" not in metadata
 assert "tag" not in metadata
 assert metadata["category"] == "去广告"
@@ -72,7 +73,11 @@ assert script_opts["binary-body-mode"] == "true"
 assert script_opts["engine"] == "webview"
 assert int(script_opts["max-size"]) >= 300000
 assert script_opts["timeout"] == "30"
-assert script_opts["script-path"] == "https://raw.githubusercontent.com/xingjiu29/Umetrip/refs/heads/main/umetrip.js"
+# Remote script must stay pinned to a full 40-hex commit, never a branch.
+assert re.fullmatch(
+    r"https://raw\.githubusercontent\.com/xingjiu29/Umetrip/[0-9a-f]{40}/umetrip\.js",
+    script_opts["script-path"],
+), script_opts["script-path"]
 
 script_pattern = script_opts["pattern"]
 assert script_pattern.startswith("(?i)")
