@@ -1,0 +1,26 @@
+# 阿里系核心业务直连（2026-11-06）
+# 用途：淘宝、天猫、支付宝、菜鸟等核心业务走直连，避免商品详情等接口因海外出口被判定为受限地区。
+# 引用时必须放在所有去广告拒绝规则之后：公共拒绝列表在这些后缀下拦截了大量广告与统计子域名，
+# 本列表若排在前面，会让这些子域名改走直连、广告重新出现。
+# 只含业务主域名后缀，不含 IP、ASN、进程或阿里云通用域名。由本仓库人工维护。
+
+# 淘宝 / 天猫
+DOMAIN-SUFFIX,taobao.com
+DOMAIN-SUFFIX,tmall.com
+DOMAIN-SUFFIX,tb.cn
+DOMAIN-SUFFIX,etao.com
+
+# 阿里静态资源与小程序
+DOMAIN-SUFFIX,alicdn.com
+DOMAIN-SUFFIX,alicdn.net
+DOMAIN-SUFFIX,tbcache.com
+DOMAIN-SUFFIX,alibabausercontent.com
+DOMAIN-SUFFIX,aliapp.com
+DOMAIN-SUFFIX,aliapp.org
+
+# 菜鸟
+DOMAIN-SUFFIX,cainiao.com
+
+# 支付宝
+DOMAIN-SUFFIX,alipay.com
+DOMAIN-SUFFIX,alipayobjects.com

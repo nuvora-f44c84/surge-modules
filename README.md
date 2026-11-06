@@ -21,6 +21,10 @@
 
 [AI-Supplement.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI-Supplement.list) 包含 197 条 AI 服务域名规则，用于补充主列表。通过主配置的 `RULE-SET` 引用并指定已有策略组；不在模块页面安装，也不包含节点或脚本。保留局域网、国内 AI 等前置规则及既有分流顺序。由本仓库人工维护，不自动合并上游。安装、范围与来源见 [AI 补充规则说明](docs/ai-supplement.md)。
 
+## 阿里系核心业务直连规则集
+
+[Alibaba-Direct.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/Alibaba-Direct.list) 包含 13 条 `DOMAIN-SUFFIX` 规则（淘宝、天猫、支付宝、菜鸟及阿里静态资源），通过主配置的 `RULE-SET` 引用并指定直连策略。**必须放在所有去广告拒绝规则之后**，否则公共拒绝列表在这些后缀下拦截的广告与统计子域名会被直连放行；也因此不做成模块。不含 IP、ASN 或阿里云通用域名。引用方式与顺序要求见[阿里系直连说明](docs/alibaba-direct.md)。
+
 ## VPS 简洁流量面板脚本
 
 [VPS-TrafficPanel.js 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/VPS-TrafficPanel.js) 支持多个面板共用同一远程脚本，分别传入监控地址、配额、重置日和请求策略。只显示流量、监控请求延时及重置天数，不添加分流规则。私人接口地址保留在本机参数中。引用方式、数据口径和限制见 [VPS 面板说明](docs/vps-traffic-panel.md)。
@@ -124,6 +128,7 @@ python3 tests/test_xiaoyuzhou_splash.py
 python3 tests/test_xiaoyuzhou_home.py
 python3 tests/test_umetrip_adblock.py
 python3 tests/test_zhibo8_adblock.py
+python3 tests/test_alibaba_direct.py
 ```
 
 广告模块构建只需 Python 3；规则测试还需 jq 1.7+。`build_amap.py` 生成高德测试版。测试检查 URL 范围、过滤逻辑、保留字段及未知结构兼容，不能替代手机验证。
