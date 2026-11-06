@@ -12,7 +12,7 @@
 | 小宇宙广告过滤 | 0.2.0 · 开屏及首页明确标记的推广横幅 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Xiaoyuzhou-Splash-AdBlock.sgmodule) |
 | 咪咕视频 · 广告域名补充 | 0.1.0 · 6 个精确域名，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/MiguVideo-AdBlock-Lite.sgmodule) |
 | 航旅纵横 · 去广告 | 0.2.1 · 开屏拦截、精简首页与我的页面，上游脚本锁定提交，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Umetrip-AdBlock-Lite.sgmodule) |
-| 直播吧 · 广告域名补充 | 0.1.0 · 4 个域名及 1 个 IP，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Zhibo8-AdBlock-Lite.sgmodule) |
+| 直播吧 · 广告域名补充 | 0.1.1 · 4 个域名（含 SNI/Host 匹配）及 1 个 IP，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Zhibo8-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
@@ -75,7 +75,7 @@
 
 ## 直播吧 · 广告域名补充（测试版）
 
-拦截直播吧的广告与统计域名、1 个 IP，以及 `mssdk.volces.com`、`tanx.com` 两个通用 SDK 域名；纯规则，无需 MITM 或脚本。两个通用 SDK 域名对所有 App 生效，其他 App 出现异常时先停用本模块。`bifen3.qiumibao.com` 与 `img1.360buyimg.com` 可能承载正常内容，刻意不拦截。从主配置迁移时，启用模块后删除主配置中的同名规则。范围与回退见[直播吧模块说明](docs/zhibo8-adblock.md)。
+拦截直播吧的广告与统计域名、1 个 IP，以及 `mssdk.volces.com`、`tanx.com` 两个通用 SDK 域名；纯规则，无需 MITM 或脚本。域名规则带 `extended-matching`，App 直接用 IP 连接时也按 SNI / Host 匹配。两个通用 SDK 域名对所有 App 生效，其他 App 出现异常时先停用本模块。`bifen3.qiumibao.com` 与 `img1.360buyimg.com` 可能承载正常内容，刻意不拦截。从主配置迁移时，启用模块后删除主配置中的同名规则。范围与回退见[直播吧模块说明](docs/zhibo8-adblock.md)。
 
 ## YouTube · LLM 翻译字幕（测试版）
 

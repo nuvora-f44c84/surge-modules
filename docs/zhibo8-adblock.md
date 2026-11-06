@@ -1,6 +1,6 @@
 # 直播吧 · 广告域名补充
 
-**0.1.0 测试版。** 纯域名/IP 拦截模块，无需 MITM、重写或脚本，无需填写参数。
+**0.1.1 测试版。** 纯域名/IP 拦截模块，无需 MITM、重写或脚本，无需填写参数。
 
 ## 安装
 
@@ -20,7 +20,13 @@
 | `DOMAIN-SUFFIX,mssdk.volces.com` | 通用 SDK | 火山引擎移动端 SDK 域名 |
 | `DOMAIN-SUFFIX,tanx.com` | 通用 SDK | 阿里妈妈广告平台 |
 
-均为 `REJECT`。用途说明来自域名含义或维护记录，未逐一抓包确认。`webstat.qiumibao.com` 已由常见公共拒绝列表覆盖，本模块不重复收录。
+均为 `REJECT`。用途说明来自域名含义或维护记录，未逐一抓包确认。
+
+### 为什么不需要 MITM
+
+域名与 IP 规则只依据连接目标判断：域名来自 DNS 映射，以及 TLS 握手中明文的 SNI。连接在建立阶段即被拒绝，不需要解密 HTTPS。只有需要按 URL 路径或响应内容区分广告时才需要 MITM。
+
+0.1.1 起，四条域名规则均带 `extended-matching`，除请求主机名外，还会匹配 TLS SNI 与 HTTP `Host`（HTTP/2、HTTP/3 为 `:authority`）。App 绕过系统 DNS 直接用 IP 连接（例如 HTTPDNS）时，域名规则仍能命中。如果连接既不带 SNI 也不带 Host，仍只能依靠 IP 规则。`webstat.qiumibao.com` 已由常见公共拒绝列表覆盖，本模块不重复收录。
 
 ### 刻意不拦截
 

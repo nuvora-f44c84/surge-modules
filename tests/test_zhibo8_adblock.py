@@ -24,7 +24,7 @@ for raw_line in module_text.splitlines():
         assert section is not None, f"Line outside section: {line}"
         sections[section].append(line)
 
-assert metadata["version"] == "0.1.0"
+assert metadata["version"] == "0.1.1"
 assert metadata["name"] == "直播吧 · 广告域名补充"
 assert metadata["category"] == "去广告"
 
@@ -32,12 +32,19 @@ assert metadata["category"] == "去广告"
 assert set(sections) == {"[Rule]"}, set(sections)
 
 assert sections["[Rule]"] == [
-    "DOMAIN-SUFFIX,ggck.qiumibao.com,REJECT",
-    "DOMAIN-SUFFIX,tongji.qiumibao.com,REJECT",
+    "DOMAIN-SUFFIX,ggck.qiumibao.com,REJECT,extended-matching",
+    "DOMAIN-SUFFIX,tongji.qiumibao.com,REJECT,extended-matching",
     "IP-CIDR,47.111.8.123/32,REJECT,no-resolve",
-    "DOMAIN-SUFFIX,mssdk.volces.com,REJECT",
-    "DOMAIN-SUFFIX,tanx.com,REJECT",
+    "DOMAIN-SUFFIX,mssdk.volces.com,REJECT,extended-matching",
+    "DOMAIN-SUFFIX,tanx.com,REJECT,extended-matching",
 ]
+
+# Every domain rule must also match SNI / Host; IP rules must not carry it.
+for rule in sections["[Rule]"]:
+    if rule.startswith(("DOMAIN", "DOMAIN-SUFFIX")):
+        assert rule.endswith(",extended-matching"), rule
+    else:
+        assert "extended-matching" not in rule, rule
 
 # Hosts that may carry normal content must stay unblocked.
 for host in ("bifen3.qiumibao.com", "img1.360buyimg.com"):
