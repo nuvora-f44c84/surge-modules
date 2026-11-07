@@ -1,20 +1,31 @@
 #!name=直播吧 · 广告域名补充
-#!desc=0.1.1 测试版。拦截 4 个广告/统计域名及 1 个 IP；域名规则同时匹配 SNI 与 Host，无需 MITM 或脚本。其中 tanx.com 与 mssdk.volces.com 为跨 App 通用 SDK 域名，启用后对所有 App 生效。
-#!version=0.1.1
+#!desc=0.2.0 测试版。拦截 6 个域名（含 SNI/Host 匹配）及 7 个关联 IP，无需 MITM 或脚本。含 bifen3.qiumibao.com 与通用 SDK 域名，若比分刷新或其他 App 异常请停用。
+#!version=0.2.0
 #!category=去广告
 #!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/zhibo8-adblock.md
 
 # Domain and IP rules only; no MITM, rewrite or script.
-# extended-matching also tests TLS SNI and HTTP Host, so domain rules still match
-# when an app connects by IP (e.g. HTTPDNS). SNI is plaintext; no decryption needed.
-# bifen3.qiumibao.com and img1.360buyimg.com are intentionally NOT blocked:
-# they may serve normal scores/images alongside ads.
+# 0.2.0 restores bifen3.qiumibao.com, apimg.dongdianqiu.com and the 6 Hangzhou
+# Alibaba Cloud / China Telecom IPs after on-device verification showed 0.1.1
+# failed to block Zhibo8 ads without them (47.110.246.204 resolves under
+# bifen3.qiumibao.com's cn-hangzhou ALB pool).
+# img1.360buyimg.com remains unblocked to avoid breaking JD images.
 # Scope and rollback: docs/zhibo8-adblock.md
 
 [Rule]
-# Zhibo8 ad delivery and statistics
+# Zhibo8 & sports ad/content endpoints
 DOMAIN-SUFFIX,ggck.qiumibao.com,REJECT,extended-matching
+DOMAIN-SUFFIX,bifen3.qiumibao.com,REJECT,extended-matching
 DOMAIN-SUFFIX,tongji.qiumibao.com,REJECT,extended-matching
+DOMAIN-SUFFIX,apimg.dongdianqiu.com,REJECT,extended-matching
+
+# Direct IP endpoints (Hangzhou Alibaba Cloud ALB / Telecom nodes used by Zhibo8)
+IP-CIDR,47.99.237.245/32,REJECT,no-resolve
+IP-CIDR,118.178.168.156/32,REJECT,no-resolve
+IP-CIDR,203.119.204.80/32,REJECT,no-resolve
+IP-CIDR,118.178.122.133/32,REJECT,no-resolve
+IP-CIDR,47.114.58.47/32,REJECT,no-resolve
+IP-CIDR,47.110.246.204/32,REJECT,no-resolve
 IP-CIDR,47.111.8.123/32,REJECT,no-resolve
 
 # Shared third-party SDKs (affect every app that uses them)
