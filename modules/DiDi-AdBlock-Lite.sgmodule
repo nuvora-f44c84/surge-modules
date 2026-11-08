@@ -1,0 +1,36 @@
+#!name=滴滴出行 · 广告过滤
+#!desc=0.1.0 测试版。拦截广告追踪域名，使用内置 JQ 与 Map Local 清理首页横幅、顺风车/代驾弹窗及推荐目的地；取消上游对导航栏与钱包的死板白名单，保留正常入口。无外部脚本，需 Surge iOS 5.14+、重写、MITM 及已信任证书。
+#!version=0.1.0
+#!category=去广告
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/didi-adblock.md
+
+# 参考可莉滴滴去广告插件的公开接口规则：
+# https://github.com/Repcz/Tool/blob/dab2af5b1c4846332fb99cea0586e8ec7a5a2068/Surge/Module/Kelee/DiDi_remove_ads.sgmodule
+# 合并同 URL 的重复 JQ 规则，取消会误删钱包余额与新业务入口的白名单过滤，仅删除明确推广字段。
+# 详情、限制与回退方法：docs/didi-adblock.md
+
+[Rule]
+DOMAIN,gwp.xiaojukeji.com,REJECT,extended-matching
+DOMAIN,gwpgz.diditaxi.com.cn,REJECT,extended-matching
+DOMAIN,adtrack.xiaojukeji.com,REJECT,extended-matching
+
+[Body Rewrite]
+http-response-jq (?i)^https://as\.xiaojukeji\.com/ep/as/toggles\? '. as $original | try (if type == "object" and (.data | type) == "array" then .data |= map(select(type != "object" or .name != "isUseNetConnectivity") | if type == "object" and (.assign | type) == "object" and (.assign.args | type) == "object" then .assign.args.rootca_pin = 0 | .assign.args.sni_list = {} else . end) else . end) catch $original'
+http-response-jq (?i)^https://conf\.diditaxi\.com\.cn/homepage/v\d/other/slow\? '. as $original | try (if type == "object" then delpaths([["data","order_cards","new_loss_banner_card"], ["data","order_cards","call_car_card_80"]]) else . end) catch $original'
+http-response-jq (?i)^https://conf\.diditaxi\.com\.cn/homepage/v\d/other/fast\? '. as $original | try (if type == "object" then delpaths([["data","disorder_cards","communicate_card"], ["data","disorder_cards","not_login_bottom_bar"], ["data","disorder_cards","riding_code_card"], ["data","disorder_cards","guess_card"], ["data","disorder_cards","scene_list_card"], ["data","disorder_cards","car_icon","data","icon_info_new_agreement"], ["data","order_cards"]]) else . end) catch $original'
+http-response-jq (?i)^https://api\.udache\.com/gulfstream/porsche/v\d/dache_homepage_layout\? '. as $original | try (if type == "object" then delpaths([["data","instances","dache_main_core_icon"]]) else . end) catch $original'
+http-response-jq (?i)^https://daijia\.kuaidadi\.com(:443)?/gateway\?api=lj\.cos\.apolloConfig '. as $original | try (if type == "object" and (.data | type) == "array" then .data |= map(select(type != "object" or (.name != "daijia-memberInfo-config" and .name != "daijia-transfer-share-config"))) else . end) catch $original'
+http-response-jq (?i)^https://api\.udache\.com/gulfstream/porsche/v\d/SFCHomeTab\? '. as $original | try (if type == "object" and (.data | type) == "object" and (.data.tab_list | type) == "array" then .data.tab_list |= map(select(type == "object" and (.tab_id == "passenger" or .tab_id == "driver"))) else . end) catch $original'
+http-response-jq (?i)^https://htwkop\.xiaojukeji\.com(:443)?/gateway\?api=hm\.fa\.(?:querySellCardSummary|queryWelfareCenter) '. as $original | try (if type == "object" and has("data") then .data = {} else . end) catch $original'
+http-response-jq (?i)^https://poi\.map\.xiaojukeji\.com/mapapi/(?:startinfo\?api_version|poiinfo\?product_id) '. as $original | try (if type == "object" then del(.rec_destination) else . end) catch $original'
+http-response-jq (?i)^https://common\.diditaxi\.com\.cn/user_common/itineraryList\? '. as $original | try (if type == "object" and (.data | type) == "object" and (.data.tab_nav | type) == "array" then .data.tab_nav |= map(if type == "object" then del(.tab_param) else . end) else . end) catch $original'
+
+[Map Local]
+(?i)^https://res\.xiaojukeji\.com/resapi/activity/mget(?:\?|$) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://daijia\.kuaidadi\.com(:443)?/gateway\?api=(?:prado\.cms\.delivery\.batch|prado\.cms\.AggregateDeliveryRemoteService\.aggregateDelivery|lj\.c\.p\.queryLevelAndRightsStatus|lj\.cos\.p\.popup) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.udache\.com/gulfstream/porsche/v\d/pSFCHomePage\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://htwkop-st\.xiaojukeji\.com/gateway\?api=cms\.htw\.delivery\.batch data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://freight\.xiaojukeji\.com/gateway\?api=freight\.d\.core\.multiDisplayV\d data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+[MITM]
+hostname = %APPEND% as.xiaojukeji.com, conf.diditaxi.com.cn, common.diditaxi.com.cn, res.xiaojukeji.com, api.udache.com, daijia.kuaidadi.com, htwkop-st.xiaojukeji.com, htwkop.xiaojukeji.com, freight.xiaojukeji.com, poi.map.xiaojukeji.com

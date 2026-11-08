@@ -1,0 +1,28 @@
+#!name=盒马 · 广告与页面精简
+#!desc=0.1.0 测试版。使用内置 JQ 与 Map Local 精简盒马首页、底栏、我的页面及推荐流；无外部脚本。采用场景白名单策略，若部分活动或搜索卡片未显示请停用。需 Surge iOS 5.14+、重写、MITM 及已信任证书。
+#!version=0.1.0
+#!category=去广告
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/freshippo-adblock.md
+
+# 参考可莉盒马去广告插件的公开接口规则：
+# https://github.com/Repcz/Tool/blob/dab2af5b1c4846332fb99cea0586e8ec7a5a2068/Surge/Module/Kelee/MrHema_remove_ads.sgmodule
+# 移除上游 Map Local 中与 JQ 冲突的 querysinglepage 整页清空规则，并为所有 JQ 表达式补齐类型保护。
+# 详情、限制与回退方法：docs/freshippo-adblock.md
+
+[Body Rewrite]
+http-response-jq (?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.render\.queryindexpage/ '. as $original | try (if type == "object" and (.data | type) == "object" and .data.pageType == "1" and (.data.scenes | type) == "array" then .data.scenes |= map(select(type == "object" and .bizCode == "three_row_circle")) else . end) catch $original'
+http-response-jq (?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.render\.querytabfeedstream/ '. as $original | try (if type == "object" and (.data | type) == "object" and .data.pageType == "5" and (.data.scenes | type) == "array" then .data.scenes |= map(select(type == "object" and .sceneType == "100028")) else . end) catch $original'
+http-response-jq (?i)^https://acs-m\.freshippo\.com/gw/(?:mtop\.wdk\.render\.querychannelpage|mtop\.wdk\.render\.querysinglepage)/ '. as $original | try (if type == "object" and (.data | type) == "object" and .data.pageType == "216" and (.data.scenes | type) == "array" then .data.scenes |= map(select(type == "object" and (.bizCode == "shop_walk_top_picture" or .bizCode == "shop_walk_shop_util" or .bizCode == "shop_walk_bistro"))) else . end) catch $original'
+http-response-jq (?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.render\.querymypage/ '. as $original | try (if type == "object" and (.data | type) == "object" and (.data.scenes | type) == "array" then .data.scenes |= map(select(type == "object" and (.sceneType | IN("400029", "400005", "400010", "400002", "400004", "400015")))) else . end) catch $original'
+http-response-jq (?i)^https://acs-m\.freshippo\.com/gw/(?:mtop\.wdk\.lbs\.location\.shopdecideapi\.decideformain|mtop\.wdk\.lbs\.location\.shopdecideapi\.decidebygeocode)/ '. as $original | try (if type == "object" and (.data | type) == "object" and (.data.groupList | type) == "array" then .data.groupList |= map(if type == "object" and (.ext | type) == "object" and (.ext.tabConfig | type) == "object" then .ext.tabConfig |= (if (.normalTabList | type) == "array" then .normalTabList |= map(select(type == "object" and (.code | IN("HOME", "CLASSIFY", "CART", "MY")))) else . end | if (.normalTabListB | type) == "array" then .normalTabListB |= map(select(type == "object" and (.code | IN("HOME", "CLASSIFY", "CART", "MY")))) else . end) else . end) else . end) catch $original'
+
+[Map Local]
+(?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.sg\.queryinnerpage/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.lbs\.address\.getshopinfolist/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.render\.querysearchpage/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.sg\.querysinglescene/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.melon\.collocation/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://acs-m\.freshippo\.com/gw/mtop\.wdk\.fc\.recommend\.feedscommondservice/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+[MITM]
+hostname = %APPEND% acs-m.freshippo.com

@@ -1,0 +1,20 @@
+#!name=微信公众号 · 广告过滤
+#!desc=0.1.0 测试版。拦截 wxs.qq.com 广告域名，并对公众号文章内广告、带货商品卡、正文搜索热词及底部推荐接口返回空对象；无外部脚本。需重写、MITM 及已信任证书。
+#!version=0.1.0
+#!category=去广告
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/wechat-adblock.md
+
+# 参考 RuCu6 / 可莉微信公众号去广告插件的公开接口规则：
+# https://github.com/Repcz/Tool/blob/dab2af5b1c4846332fb99cea0586e8ec7a5a2068/Surge/Module/Kelee/Weixin_Official_Accounts_remove_ads.sgmodule
+# 纯规则与 Map Local，无外部脚本依赖。
+# 详情、限制与回退方法：docs/wechat-adblock.md
+
+[Rule]
+DOMAIN-SUFFIX,wxs.qq.com,REJECT,extended-matching
+
+[Map Local]
+(?i)^https://mp\.weixin\.qq\.com/mp/(?:cps_product_info|getappmsgad|jsmonitor|masonryfeed|relatedarticle)\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://mp\.weixin\.qq\.com/mp/relatedsearchword(?:[/?]|$) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+[MITM]
+hostname = %APPEND% mp.weixin.qq.com

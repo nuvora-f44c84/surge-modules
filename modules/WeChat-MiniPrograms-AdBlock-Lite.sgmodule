@@ -1,0 +1,111 @@
+#!name=微信小程序 · 广告过滤（无脚本版）
+#!desc=0.1.0 测试版。收录常用生活服务小程序（丰巢、顺丰、中通、EMS、美团点餐、收钱吧、星巴克、麦当劳、猫眼、微信充值等）广告过滤规则；剔除全部外部 JS 脚本与整域清空规则，不解密 12306。需 Surge iOS 5.14+、重写、MITM 及已信任证书。
+#!version=0.1.0
+#!category=去广告
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/wechat-adblock.md
+
+# 参考可莉微信小程序去广告插件的公开规则裁剪：
+# https://github.com/Repcz/Tool/blob/dab2af5b1c4846332fb99cea0586e8ec7a5a2068/Surge/Module/Kelee/WexinMiniPrograms_Remove_ads.sgmodule
+# 仅保留纯规则、URL Rewrite、防御式内置 JQ 与带明确路径的 Map Local；
+# 剔除 12 个外部远程脚本、整域 Map Local 及与规则无关的 MITM 主机。
+# 详情、限制与回退方法：docs/wechat-adblock.md
+
+[Rule]
+DOMAIN,wxsnsdy.wxs.qq.com,REJECT,extended-matching
+DOMAIN,wxsmsdy.video.qq.com,REJECT,extended-matching
+DOMAIN,wxsnsdythumb.wxs.qq.com,REJECT,extended-matching
+DOMAIN,ads-shopping.shouqianba.com,REJECT,extended-matching
+DOMAIN,ad.maoyan.com,REJECT,extended-matching
+DOMAIN,e.jparking.cn,REJECT,extended-matching
+
+[URL Rewrite]
+(?i)^https://webapi\.qmai\.cn/web/cmk-center/marketing/canvas/advert-reach _ reject
+(?i)^https://creditcardapp\.bankcomm\.com/cnsvPmpaMdbcardWeb/page/getGuidePageAds _ reject
+(?i)^https://mbmodule-openapi\.paas\.cmbchina\.com/graphic/v2/module/graphic _ reject
+(?i)^https://app\.95504\.net/app/json/page_ad/initPageAd\?ver= _ reject
+(?i)^https://minipro\.95504\.net/app/json/ad/(?:getPopAdData|getIndexAdData) _ reject
+(?i)^https://flow\.dmall\.com/app/home/pops _ reject
+(?i)^https://api\.yonghuivip\.com/api/fp/homepage/pop _ reject
+(?i)^https://activity\.yonghuivip\.com/api/(?:app/fp/homepage/pop|/web/shensuan/ad) _ reject
+(?i)^https://sauron-report\.yonghuivip\.com/collect _ reject
+(?i)^https://ump\.ems\.com\.cn/mailAd$ _ reject
+(?i)^https://hdgateway\.zto\.com/(?:getApolloConfig|track|getAdInfo|listJumperShow) _ reject
+(?i)^https://fscdn\.zto\.com/fs1 _ reject
+(?i)^https://aag\.enmonster\.com/apa/index/advert/skin _ reject
+(?i)^https://ad\.xiaotucc\.com/advert _ reject
+(?i)^https://api-marketing\.zhinengxiyifang\.cn/api/v2/cloudcode/wechat/bid _ reject
+(?i)^https://ccmsupport-sz\.tenpay\.com/cgi-bin/common/ccm_page_element\.cgi _ reject
+(?i)^https://api\.pinduoduo\.com/api/ktt_gateway/activity/feeds/personal_home_page/ _ reject
+(?i)^https://api\.szbgcx\.cn/account/adv/ _ reject
+
+[Body Rewrite]
+http-response-jq (?i)^https://mcsp\.cloudpnr\.com/api/miniapp/popular/T_MINIAPP$ '. as $original | try (if type == "object" then del(.data) else . end) catch $original'
+http-response-jq (?i)^https://saas-ad\.cloudpnr\.com/huifuad-base-api/api/tactics/ad$ '. as $original | try (if type == "object" and (.data | type) == "array" then .data |= .[3:] else . end) catch $original'
+http-response-jq (?i)^https://rms\.meituan\.com/api/v1/rmsmina/c/queryShopPortalInfo\? '. as $original | try (if type == "object" then delpaths([["data","popUpWindows"]]) else . end) catch $original'
+http-response-jq (?i)^https://chong\.qq\.com/tws/wxmobile/GetProduct4App\? '. as $original | try (if type == "object" and (.respInfo | type) == "object" then del(.respInfo.reserveProductList) | if (.respInfo.shortcut | type) == "array" then .respInfo.shortcut |= map(select(type != "object" or (.name != "充流量" and .name != "领话费券"))) else . end else . end) catch $original'
+http-response-jq (?i)^https://chong\.qq\.com/tws/wxmobile4app/GetSecondProduct\? '. as $original | try (if type == "object" and (.respInfo | type) == "object" then del(.respInfo.productList) | if (.respInfo.shortcut | type) == "array" then .respInfo.shortcut |= map(select(type != "object" or (.name != "充流量" and .name != "领话费券"))) else . end else . end) catch $original'
+http-response-jq (?i)^https://chong\.qq\.com/tws/usernumberinfo/GetUserInfo\? '. as $original | try (if type == "object" then delpaths([["data","request","number","markSeat","servicehallOperList"], ["data","request","number","servicehallOperList"], ["data","request","number","markSeat","servicehallFuncList"], ["data","request","number","servicehallFuncList"]]) else . end) catch $original'
+
+[Map Local]
+(?i)^https://webapi\.qmai\.cn/web/catering/advertising/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://images\.qmai\.cn/s214925/2023 data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://webchatapp\.fcbox\.com/(?:fcboxactivityweb/api/v2/clientPage/modulesAggregated\?|fcboxactivityweb/api/v2/clientPage/getHomeLiveInfo$|post/suggestion/query$|fcboxactivityweb/marketingEntrance/v2/infoWithItems$|fcboxactivityweb/marketingEntrance/info$) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://dsp\.fcbox\.com/adSearch/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://res\.pizzahut\.com\.cn/CRM data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.mcd\.cn/bff/portal/home/hotActivity data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://3pp\.starbucks\.com\.cn/wxmem/(?:popup|index/banner|index/global) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wechat-api\.i-xiaoma\.com\.cn/app/v1/bus/wechat/content data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://apiproxy\.zuche\.com/resource/carrctapi/home/(?:marketing|page/advertising) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://miniprogram\.ishansong\.com/cms/faq/query data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://ads\.ishansong\.com/advert data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://minicap\.caocaokeji\.cn/advert-bss/pullAdvert data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://r2\.gzyct\.com/qrcode/advert data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.hellobike\.com/api\?adx data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.kuaidihelp\.com/g_order_core/v2/mina/User/getBannerList data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wxproj\.seeyouyima\.com/data/today_tips data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://suyun-guest\.daojia\.com/api/kuaigou/banjia/review data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://ne\.gdsz\.sinopec\.com/gateway/api/omp/mt/appAdvertising data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://qapi\.huolala\.cn/(?:ads|home_new_user|get_service_list) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://appuser-static\.huolala\.cn/imgs data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://apis\.alenable\.com/(?:mall/v1/api/mall/skin/user/get|ycx/v1/api/adPut) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://dock\.tenchii\.com/DockCard/api/mini/card/list data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://customer-app\.sto\.cn/api/app/banner/banner data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://sto-customer-app\.oss-cn-shanghai\.aliyuncs\.com/images data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://supplier-api\.imdada\.cn/fe/public/ad/spot\?forwardServiceName=growth-activity data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://mobile-api\.imlaidian\.com/api/args data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wxs-weixin\.sd\.zhumanggroup\.com/api/v2/ad data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://s\.jiediankeji\.com/adv data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://file\.dian\.so/c/leto data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.songguo7\.com/(?:\w{3})?mp/v2/misc/(?:toast|user_operate_info|unlock_without_order|unlock_operate_info) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://tm-api\.pin-dao\.cn/home/api/(?:index/activeConfig/v2|resource/config/homeBannerNodes) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api-fouth-mem\.huazhu\.com/api/rights/bannerList data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wxapp\.bestwehotel\.com/gw3/app-mini/trip-hotel-banner/activity/getActivityInfo data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wx\.bthhotels\.com/miniapp/weixin/v1/home/index_banner data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://app\.homeinns\.com/api/(?:v6/indexs|v5/local|v5/index) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://mxsa\.mxbc\.net/api/v1/adinfo/adplace/query data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://htwkop\.xiaojukeji\.com/gateway\?api=(?:cms\.htw\.delivery|hm\.fa\.combineHomepageInfo|hm\.fa\.mallRecommend) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://lawsonapi\.yorentown\.com/area/sh-lawson/app/v1/mina/systemSetting data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://plt\.yorentown\.com/pltapp/v1/banner data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://member\.lxjchina\.com\.cn/mini-server/home/page/banner data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://cbd-gateway-service-applets\.hualala\.com/arch/api/banner/QueryBannerImgList data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://alittle-tea\.oss-cn-shanghai\.aliyuncs\.com/images/platform/alittle data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.prod\.dj\.mstand\.cn/scrm/app/mdm/index/listAdv\?types data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://gw-passenger-wap\.01zhuanche\.com/gw-passenger-wap/zhuanche-passenger-token/commonSkipToken/common/getAdList data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://www\.deppon\.com/gwapi/memberService/eco/member/grade/commonInterface data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://passengerapi\.saicmobility\.com/(?:ad/requestAd|pay/v1/queryOpenedCouponPackages) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://passenger\.t3go\.cn/passenger-activity-api/notoken/api/v1/resource/getSource data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://m\.ctrip\.com/restapi/soa2/(?:13916/tripAds|12673/queryWeChatHotEvent) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wx\.maoyan\.com/maoyansh/(?:api/mobile/(?:hotMatchList|eSportsIps)|myshow/ajax/(?:movie/wonderShow|performances/calendar/0|performances/rob/main|celebrityBasicList/query|recommend/performances|ad/detail)) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://vod-movie\.maoyan\.com/vod/video/onlineMovies\.json data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.maoyan\.com/sns/common/feed/channel/v2/list\.json data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://mkt-gateway\.tuhu\.cn/mkt-scene-marketing-service/api/scene/queryScheme data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://api\.hengdianfilm\.com//cinema/queryAvailableBannerInfo/(?:2|4)\?cid= data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://tbgapplet\.carlsberg\.asia/tuborg/banner/(?:loading|index) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://ucmp\.sf-express\.com/proxy/(?:operation-platform/info-flow-adver/query|esgcempcore/memberGoods/pointMallService/goodsList) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://as\.xiaojukeji\.com/ep/as/conf\?ns=daijia-front&name= data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://daijia\.kuaidadi\.com/gateway\?api=prado\.cms\.delivery\.batch&apiVe data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wx\.online-cmcc\.cn/contactpoint/customer/api/list\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://wx\.10086\.cn/qwhdhub/activity/info data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+[MITM]
+hostname = %APPEND% 3pp.starbucks.com.cn, aag.enmonster.com, activity.yonghuivip.com, ad.xiaotucc.com, ads.ishansong.com, alittle-tea.oss-cn-shanghai.aliyuncs.com, api-fouth-mem.huazhu.com, api-marketing.zhinengxiyifang.cn, api.hellobike.com, api.hengdianfilm.com, api.kuaidihelp.com, api.maoyan.com, api.mcd.cn, api.pinduoduo.com, api.prod.dj.mstand.cn, api.songguo7.com, api.szbgcx.cn, api.yonghuivip.com, apiproxy.zuche.com, apis.alenable.com, app.95504.net, app.homeinns.com, appuser-static.huolala.cn, as.xiaojukeji.com, cbd-gateway-service-applets.hualala.com, ccmsupport-sz.tenpay.com, chong.qq.com, creditcardapp.bankcomm.com, customer-app.sto.cn, daijia.kuaidadi.com, dock.tenchii.com, dsp.fcbox.com, file.dian.so, flow.dmall.com, fscdn.zto.com, gw-passenger-wap.01zhuanche.com, hdgateway.zto.com, htwkop.xiaojukeji.com, images.qmai.cn, lawsonapi.yorentown.com, m.ctrip.com, mbmodule-openapi.paas.cmbchina.com, mcsp.cloudpnr.com, member.lxjchina.com.cn, minicap.caocaokeji.cn, minipro.95504.net, miniprogram.ishansong.com, mkt-gateway.tuhu.cn, mobile-api.imlaidian.com, mxsa.mxbc.net, ne.gdsz.sinopec.com, passenger.t3go.cn, passengerapi.saicmobility.com, plt.yorentown.com, qapi.huolala.cn, r2.gzyct.com, res.pizzahut.com.cn, rms.meituan.com, s.jiediankeji.com, saas-ad.cloudpnr.com, sauron-report.yonghuivip.com, sto-customer-app.oss-cn-shanghai.aliyuncs.com, supplier-api.imdada.cn, suyun-guest.daojia.com, tbgapplet.carlsberg.asia, tm-api.pin-dao.cn, ucmp.sf-express.com, ump.ems.com.cn, vod-movie.maoyan.com, webapi.qmai.cn, webchatapp.fcbox.com, wechat-api.i-xiaoma.com.cn, www.deppon.com, wx.10086.cn, wx.bthhotels.com, wx.maoyan.com, wx.online-cmcc.cn, wxapp.bestwehotel.com, wxproj.seeyouyima.com, wxs-weixin.sd.zhumanggroup.com

@@ -14,6 +14,10 @@
 | 航旅纵横 · 去广告 | 0.2.1 · 开屏拦截、精简首页与我的页面，上游脚本锁定提交，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Umetrip-AdBlock-Lite.sgmodule) |
 | 直播吧 · 广告域名补充 | 0.2.0 · 6 个域名（含 SNI/Host 匹配）及 7 个关联 IP，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Zhibo8-AdBlock-Lite.sgmodule) |
 | 铁路 12306 · 广告过滤 | 0.1.0 · 直连放行 `ad.12306.cn` 并用 JQ 移除 `getAdList` 广告素材，无脚本，不碰购票网关，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/12306-AdBlock-Lite.sgmodule) |
+| 微信公众号 · 广告过滤 | 0.1.0 · 拦截 `wxs.qq.com` 并清空文章内广告、带货商品卡与正文搜索热词，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/WeChat-Official-Accounts-AdBlock-Lite.sgmodule) |
+| 微信小程序 · 广告过滤（无脚本版） | 0.1.0 · 常用生活服务小程序去广告，剔除全部外部脚本与整域清空规则，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/WeChat-MiniPrograms-AdBlock-Lite.sgmodule) |
+| 滴滴出行 · 广告过滤 | 0.1.0 · 清理首页横幅、顺风车/代驾弹窗及推荐目的地，取消钱包与导航白名单，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/DiDi-AdBlock-Lite.sgmodule) |
+| 盒马 · 广告与页面精简 | 0.1.0 · 精简首页、底栏、我的页面及推荐流，修复单页规则冲突，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Freshippo-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
@@ -86,6 +90,18 @@
 
 通过前置 `DIRECT` 规则覆盖公共去广告规则集对 `ad.12306.cn` 的整域拒绝，再使用 Surge 内置 JQ 删除 `ad.12306.cn/ad/ser/getAdList` 响应中的 `materialsList` 与 `advertParam` 字段，处理开屏及横幅广告。无外部脚本依赖，仅解密 `ad.12306.cn`；刻意不解密购票业务网关 `mobile.12306.cn`，也不处理网关下发的底部资讯流。范围、限制与回退见 [12306 模块说明](docs/12306-adblock.md)。
 
+## 微信公众号与小程序 · 广告过滤（测试版）
+
+公众号模块拦截 `wxs.qq.com`，并对 `mp.weixin.qq.com` 的文章广告、带货商品卡、正文蓝色搜索热词及底部推荐流返回空对象。小程序模块覆盖丰巢、顺丰、中通、EMS、美团扫码点餐、收钱吧、星巴克、麦当劳、猫眼、微信话费充值、充电宝、酒店等常用小程序广告接口，彻底剔除上游的 12 个外部远程脚本、整域空 JSON 规则与 `mobile.12306.cn`。范围与限制见[微信去广告说明](docs/wechat-adblock.md)。
+
+## 滴滴出行 · 广告过滤（测试版）
+
+拦截滴滴广告追踪域名，使用内置 JQ 与 Map Local 清理首页横幅、顺风车/代驾活动弹窗及推荐目的地；合并上游重复 JQ 规则，并取消上游对首页导航栏与个人中心钱包的死板白名单（避免误删钱包余额或正常打车入口）。无外部脚本。范围与回退见[滴滴模块说明](docs/didi-adblock.md)。
+
+## 盒马 · 广告与页面精简（测试版）
+
+使用内置 JQ 与 Map Local 精简盒马首页、底栏 Tab、我的页面及凑单/信息流推荐，修复上游 `Map Local` 遮蔽 `querysinglepage`（逛门店页）JQ 规则的冲突，并为所有 JQ 表达式补齐类型保护。采用场景白名单策略，若部分活动或搜索卡片未显示可停用模块。详见[盒马模块说明](docs/freshippo-adblock.md)。
+
 ## YouTube · LLM 翻译字幕（测试版）
 
 连接使用者自己的字幕翻译后端，默认简体中文双语。中文目标下的中文字幕直接放行；只合并完全相同的两行中文字幕，保留时间信息和正常双语。模块自动下载脚本。
@@ -134,6 +150,9 @@ python3 tests/test_xiaoyuzhou_home.py
 python3 tests/test_umetrip_adblock.py
 python3 tests/test_zhibo8_adblock.py
 python3 tests/test_12306_adblock.py
+python3 tests/test_wechat_adblock.py
+python3 tests/test_didi_adblock.py
+python3 tests/test_freshippo_adblock.py
 python3 tests/test_alibaba_direct.py
 ```
 
