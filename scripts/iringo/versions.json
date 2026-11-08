@@ -1,0 +1,53 @@
+{
+  "WeatherKit": {
+    "repo": "NSRingo/WeatherKit",
+    "tag_name": "v3.3.2",
+    "html_url": "https://github.com/NSRingo/WeatherKit/releases/tag/v3.3.2",
+    "assets": {
+      "WeatherKit-request.bundle.js": {
+        "upstream_name": "request.bundle.js",
+        "size": 180133,
+        "sha256": "da05af299dd2172e1c25a2bff349cdda268114ee7fc43340cc48da29c76ea033"
+      },
+      "WeatherKit-response.bundle.js": {
+        "upstream_name": "response.bundle.js",
+        "size": 286476,
+        "sha256": "ce1db90d77c44fce972db0c2e319845fc1d6a276d41d772c0294882e59d7f999"
+      }
+    }
+  },
+  "Siri": {
+    "repo": "NSRingo/Siri",
+    "tag_name": "v4.2.7",
+    "html_url": "https://github.com/NSRingo/Siri/releases/tag/v4.2.7",
+    "assets": {
+      "Siri-request.bundle.js": {
+        "upstream_name": "request.bundle.js",
+        "size": 145455,
+        "sha256": "0725d734f78195438e7cc87e4d3e8464b3a237a6cb83514e60750cfd78b2f8ef"
+      },
+      "Siri-response.bundle.js": {
+        "upstream_name": "response.bundle.js",
+        "size": 65085,
+        "sha256": "42401aa3ea5b8bd784ec3cf3f9070e237291f975e395a068b938cc27672cc38b"
+      }
+    }
+  },
+  "TestFlight": {
+    "repo": "NSRingo/TestFlight",
+    "tag_name": "v3.4.0",
+    "html_url": "https://github.com/NSRingo/TestFlight/releases/tag/v3.4.0",
+    "assets": {
+      "TestFlight-request.bundle.js": {
+        "upstream_name": "request.bundle.js",
+        "size": 25108,
+        "sha256": "a03f141a5a715e00fc97a07d17d41607b9acec0e68953b0caa7ec5c185965ea9"
+      },
+      "TestFlight-response.bundle.js": {
+        "upstream_name": "response.bundle.js",
+        "size": 24225,
+        "sha256": "af148b947a0340427ba2df7ad5775b3fe7233462790c66a9096140bb97fe4406"
+      }
+    }
+  }
+}
