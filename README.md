@@ -21,6 +21,9 @@
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
+| Siri 与聚焦搜索（iRingo） | 0.1.0 · 官方 Siri v4.2.7 远程脚本，解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
+| TestFlight · 区域与通用应用（iRingo） | 0.1.0 · 官方 TestFlight v3.4.0 远程脚本，解除区域限制并开启通用应用安装，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-TestFlight.sgmodule) |
+| 外链中转页 · 自动直跳 | 0.1.0 · 请求阶段自动解码并 302 跳过知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博外链确认页，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Direct-Link.sgmodule) |
 
 ## AI 专用域名补充规则集
 
@@ -130,13 +133,25 @@ X 实验模块存在加载兼容性问题。网页版过滤规则和 App 内修�
 
 安装时停用其他处理同一接口的定位模块，确认实际请求返回预期地区后再移除旧本地文件。该网络地区信号不等于 GPS、SIM 或 Apple 账号地区，也不能保证全部地区功能解锁。范围、安装和验证见[定位地区检测说明](docs/iringo-location-service.md)。
 
+## Siri 与聚焦搜索（iRingo）
+
+基于 NSRingo Siri v4.2.7 官方远程脚本，合并 iOS 18+ / macOS 15+ 的 Parsec 搜索接口与 `/bag`、`/card`、`/flight` 接口，默认设定 `CountryCode:US`、`SiriLocale:zh_CN`、`SiriResponseLanguageVariant:zh_CN`，在保持中文 Siri 问答的同时解锁聚焦搜索（Spotlight）、长按“查询（Look Up）”及维基百科知识卡片，并移除上游模板遗留的 `debug=1` 开关。范围与限制见 [Siri 与聚焦搜索说明](docs/iringo-siri-spotlight.md)。
+
+## TestFlight · 区域与通用应用（iRingo）
+
+基于 NSRingo TestFlight v3.4.0 官方远程脚本，将 TestFlight 区域默认改写为 `US` 并开启 `Universal=true` 跨平台通用应用安装支持；同时将 `iosapps.itunes.apple.com` 加入 `skip-proxy` 直连下载测试包。范围与限制见 [TestFlight 模块说明](docs/iringo-testflight.md)。
+
+## 外链中转页 · 自动直跳（测试版）
+
+在 `http-request` 阶段提取并 URL 解码知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博外链中转页的目标参数，校验为合法 `http(s)://` 地址后直接本地返回 `302` 跳转；不含明文 URL 参数时自动放行。因上游 `GetSomeFries` 的微信外链解析存在路径匹配失效与 `eval` 执行风险，本模块不包含 `weixin110.qq.com`。范围与验证见[外链直跳说明](docs/direct-link.md)。
+
 ## 目录与维护
 
 ```text
 modules/   远程发布的 Surge 模块
 rules/     远程发布的 Surge 规则集
 src/       模块源代码
-scripts/   构建脚本，以及 CF-AutoRank.js 远程运行文件
+scripts/   构建脚本，以及 CF-AutoRank.js、Direct-Link.js 等远程运行文件
 tests/     各模块自动化检查（CF 测试位于 cf-autorank/）
 docs/     模块说明
 ```
@@ -154,6 +169,9 @@ python3 tests/test_wechat_adblock.py
 python3 tests/test_didi_adblock.py
 python3 tests/test_freshippo_adblock.py
 python3 tests/test_alibaba_direct.py
+python3 tests/test_direct_link.py
+python3 tests/test_iringo_modules.py
+node --check scripts/Direct-Link.js
 ```
 
 广告模块构建只需 Python 3；规则测试还需 jq 1.7+。`build_amap.py` 生成高德测试版。测试检查 URL 范围、过滤逻辑、保留字段及未知结构兼容，不能替代手机验证。

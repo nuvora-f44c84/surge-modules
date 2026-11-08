@@ -1,0 +1,14 @@
+#!name=外链中转页 · 自动直跳
+#!desc=0.1.0 测试版。在请求阶段自动解码并跳过知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博的外链安全确认中转页，直接 302 跳转目标网址；无明文 URL 参数时自动放行。需脚本与 MITM 支持。
+#!category=实用工具
+#!version=0.1.0
+
+# 仅匹配携带查询参数的常见外链中转页路径，在本地完成 URL 解码与 302 重定向。
+# 不含 weixin110.qq.com（微信外链 HTML 跳板页需响应体解析，上游 GetSomeFries 存在路径匹配失效与 eval 执行风险，故不纳入）。
+# 说明与回退：../docs/direct-link.md
+
+[Script]
+direct-link-request = type=http-request,pattern=(?i)^https?:\/\/(?:link\.(?:zhihu\.com|csdn\.net|juejin\.cn)\/\?|(?:\w+\.)?jianshu\.com\/go-wild\?|c\.pc\.qq\.com\/(?:middlem|ios|pc|index)\.html\?|mail\.qq\.com\/cgi-bin\/readtemplate\?|weibo\.cn\/sinaurl\?),requires-body=0,script-path=https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/Direct-Link.js,timeout=5
+
+[MITM]
+hostname = %APPEND% link.zhihu.com, link.csdn.net, link.juejin.cn, www.jianshu.com, jianshu.com, c.pc.qq.com, mail.qq.com, weibo.cn

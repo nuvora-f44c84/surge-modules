@@ -1,0 +1,27 @@
+#!name=TestFlight · 区域与通用应用（iRingo）
+#!desc=0.1.0 测试版。基于官方 NSRingo/TestFlight v3.4.0 远程脚本，解除 TestFlight 测试版 App 的国家或地区限制（默认 US），并开启 iOS / iPadOS / macOS 通用应用支持（Universal=true）；安装包域名 iosapps.itunes.apple.com 自动跳过代理直连下载。需脚本与 MITM 支持。
+#!openUrl=http://boxjs.com/#/app/iRingo.TestFlight
+#!author=VirgilClyne[https://github.com/VirgilClyne]
+#!homepage=https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/iringo-testflight.md
+#!icon=https://developer.apple.com/assets/elements/icons/testflight/testflight-128x128_2x.png
+#!category= iRingo
+#!version=0.1.0
+#!arguments=CountryCode:US,MultiAccount:false,Universal:true,AlwaysShowInstall:false,MergeNotifications:false,LogLevel:WARN
+#!arguments-desc=CountryCode：TestFlight 目标国家或地区代码，默认 US（设为 AUTO 则跟随系统地区）；MultiAccount：多账号支持（自动保存与更新账号令牌），默认 false；Universal：通用应用支持（允许在 iOS / iPadOS / macOS 间跨平台安装兼容测试包），默认 true；AlwaysShowInstall：始终显示“安装”按钮（忽略服务端不兼容标记），默认 false；MergeNotifications：合并苹果推送通知，默认 false；LogLevel：日志等级，默认 WARN。
+
+# SPDX-License-Identifier: Apache-2.0
+# Based on NSRingo/TestFlight v3.4.0:
+# https://github.com/NSRingo/TestFlight/releases/tag/v3.4.0
+# The official request and response scripts are fetched remotely from v3.4.0 without modifications.
+# License: ../LICENSES/Apache-2.0.txt
+# Installation and scope: ../docs/iringo-testflight.md
+
+[General]
+skip-proxy = %APPEND% iosapps.itunes.apple.com
+
+[Script]
+✈ TestFlight.request = type=http-request,pattern=^https?:\/\/testflight\.apple\.com\/,requires-body=1,script-path=https://github.com/NSRingo/TestFlight/releases/download/v3.4.0/request.bundle.js,argument=CountryCode={{{CountryCode}}}&MultiAccount={{{MultiAccount}}}&Universal={{{Universal}}}&AlwaysShowInstall={{{AlwaysShowInstall}}}&MergeNotifications={{{MergeNotifications}}}&LogLevel={{{LogLevel}}}
+✈ TestFlight.response = type=http-response,pattern=^https?:\/\/testflight\.apple\.com\/,requires-body=1,script-path=https://github.com/NSRingo/TestFlight/releases/download/v3.4.0/response.bundle.js,argument=CountryCode={{{CountryCode}}}&MultiAccount={{{MultiAccount}}}&Universal={{{Universal}}}&AlwaysShowInstall={{{AlwaysShowInstall}}}&MergeNotifications={{{MergeNotifications}}}&LogLevel={{{LogLevel}}}
+
+[MITM]
+hostname = %APPEND% testflight.apple.com
