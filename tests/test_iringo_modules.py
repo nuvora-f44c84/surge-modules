@@ -33,13 +33,14 @@ class IRingoModulesTests(unittest.TestCase):
         for line in active_lines:
             self.assertNotIn("debug=1", line)
         self.assertIn(
-            "https://github.com/NSRingo/Siri/releases/download/v4.2.7/request.bundle.js",
+            "https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/iringo/Siri-v4.2.7-request.bundle.js",
             self.siri_text,
         )
         self.assertIn(
-            "https://github.com/NSRingo/Siri/releases/download/v4.2.7/response.bundle.js",
+            "https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/iringo/Siri-v4.2.7-response.bundle.js",
             self.siri_text,
         )
+        self.assertNotIn("github.com/NSRingo/Siri/releases/download", self.siri_text)
         self.assertIn(
             "hostname = %APPEND% guzzoni.smoot.apple.com, api*.smoot.apple.com, api.smoot.apple.cn",
             self.siri_text,
@@ -60,12 +61,15 @@ class IRingoModulesTests(unittest.TestCase):
         )
         self.assertIn("skip-proxy = %APPEND% iosapps.itunes.apple.com", self.tf_text)
         self.assertIn(
-            "https://github.com/NSRingo/TestFlight/releases/download/v3.4.0/request.bundle.js",
+            "https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/iringo/TestFlight-v3.4.0-request.bundle.js",
             self.tf_text,
         )
         self.assertIn(
-            "https://github.com/NSRingo/TestFlight/releases/download/v3.4.0/response.bundle.js",
+            "https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/iringo/TestFlight-v3.4.0-response.bundle.js",
             self.tf_text,
+        )
+        self.assertNotIn(
+            "github.com/NSRingo/TestFlight/releases/download", self.tf_text
         )
         self.assertIn("hostname = %APPEND% testflight.apple.com", self.tf_text)
 

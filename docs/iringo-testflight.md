@@ -31,4 +31,4 @@ https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRing
 ## 来源与许可
 
 - [NSRingo/TestFlight](https://github.com/NSRingo/TestFlight)（[v3.4.0 Release](https://github.com/NSRingo/TestFlight/releases/tag/v3.4.0)）
-- 保留上游作者署名，遵循 [Apache-2.0](../LICENSES/Apache-2.0.txt)。运行 JS 直接引用官方 v3.4.0 发布构建。
+- 保留上游作者署名，遵循 [Apache-2.0](../LICENSES/Apache-2.0.txt)。`0.1.1` 将未修改的官方 `v3.4.0` 发布构建托管于本仓库 [`scripts/iringo/`](../scripts/iringo/) 并通过 `raw.githubusercontent.com` 直供，规避 `github.com/.../releases/download/...` 出现 `HTTP 504` 超时导致模块无法安装的问题。

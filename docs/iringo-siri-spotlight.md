@@ -39,4 +39,4 @@ https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRing
 ## 来源与许可
 
 - [NSRingo/Siri](https://github.com/NSRingo/Siri)（[v4.2.7 Release](https://github.com/NSRingo/Siri/releases/tag/v4.2.7)）
-- 保留上游作者署名，遵循 [Apache-2.0](../LICENSES/Apache-2.0.txt)。运行 JS 直接引用官方 v4.2.7 发布构建。
+- 保留上游作者署名，遵循 [Apache-2.0](../LICENSES/Apache-2.0.txt)。`0.1.1` 将未修改的官方 `v4.2.7` 发布构建托管于本仓库 [`scripts/iringo/`](../scripts/iringo/) 并通过 `raw.githubusercontent.com` 直供，规避 `github.com/.../releases/download/...` 出现 `HTTP 504` 超时导致模块无法安装的问题。

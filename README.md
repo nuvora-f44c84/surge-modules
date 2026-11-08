@@ -21,8 +21,8 @@
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.0 · 官方 WeatherKit 远程脚本，美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
-| Siri 与聚焦搜索（iRingo） | 0.1.0 · 官方 Siri v4.2.7 远程脚本，解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
-| TestFlight · 区域与通用应用（iRingo） | 0.1.0 · 官方 TestFlight v3.4.0 远程脚本，解除区域限制并开启通用应用安装，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-TestFlight.sgmodule) |
+| Siri 与聚焦搜索（iRingo） | 0.1.1 · 官方 Siri v4.2.7 脚本（本仓库 Raw 直供，规避 GitHub Releases 504），解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
+| TestFlight · 区域与通用应用（iRingo） | 0.1.1 · 官方 TestFlight v3.4.0 脚本（本仓库 Raw 直供，规避 GitHub Releases 504），解除区域限制并开启通用应用安装，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-TestFlight.sgmodule) |
 | 外链中转页 · 自动直跳 | 0.1.0 · 请求阶段自动解码并 302 跳过知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博外链确认页，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Direct-Link.sgmodule) |
 
 ## AI 专用域名补充规则集
