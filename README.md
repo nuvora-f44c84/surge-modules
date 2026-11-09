@@ -24,6 +24,7 @@
 | Siri 与聚焦搜索（iRingo） | 0.1.1 · 官方 Siri 脚本（本仓库 Raw 直供 + 每周自动巡检上游），解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
 | TestFlight · 区域与通用应用（iRingo） | 0.1.1 · 官方 TestFlight 脚本（本仓库 Raw 直供 + 每周自动巡检上游），解除区域限制并开启通用应用安装，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-TestFlight.sgmodule) |
 | 外链中转页 · 自动直跳 | 0.1.0 · 请求阶段自动解码并 302 跳过知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博外链确认页，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Direct-Link.sgmodule) |
+| 哔哩哔哩 · PCDN 节点屏蔽 | 0.1.0 · 使用 `REJECT-NO-DROP` 屏蔽 77 个 B 站/猫耳 FM/派欧云/臻选云 PCDN 域名，促使播放器毫秒级切换商业主干 CDN，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Bilibili-PCDN-Block.sgmodule) |
 
 ## AI 专用域名补充规则集
 
@@ -149,6 +150,10 @@ X 实验模块存在加载兼容性问题。网页版过滤规则和 App 内修�
 
 在 `http-request` 阶段提取并 URL 解码知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博外链中转页的目标参数，校验为合法 `http(s)://` 地址后直接本地返回 `302` 跳转；不含明文 URL 参数时自动放行。因上游 `GetSomeFries` 的微信外链解析存在路径匹配失效与 `eval` 执行风险，本模块不包含 `weixin110.qq.com`。范围与验证见[外链直跳说明](docs/direct-link.md)。
 
+## 哔哩哔哩 · PCDN 节点屏蔽（测试版）
+
+使用 `REJECT-NO-DROP`（立即返回连接拒绝而非静默丢包）拦截 B 站自营 MCDN、302 第三方调度入口、白山云、猫耳 FM 以及派欧云（PPIO 字母表伪装域名池）、臻选云、雾楚云等 77 个 PCDN 域名与关键字，使播放器在 0 毫秒内回退至阿里云/腾讯云等商业主干网备用 CDN（`backup_url`）。已去重并剔除与视频卡顿无关的 `cm.bilibili.com`。纯规则，无需 MITM 或脚本。范围与回退见 [B 站 PCDN 屏蔽说明](docs/bilibili-pcdn-block.md)。
+
 ## 目录与维护
 
 ```text
@@ -175,6 +180,7 @@ python3 tests/test_freshippo_adblock.py
 python3 tests/test_alibaba_direct.py
 python3 tests/test_wetype_reject.py
 python3 tests/test_direct_link.py
+python3 tests/test_bilibili_pcdn_block.py
 python3 tests/test_iringo_modules.py
 python3 scripts/sync_iringo_upstream.py --check
 node --check scripts/Direct-Link.js

@@ -1,0 +1,99 @@
+#!name=哔哩哔哩 · PCDN 节点屏蔽
+#!desc=0.1.0 测试版。使用 REJECT-NO-DROP 立即拒绝 B 站自营 MCDN、302 第三方调度及派欧云（PPIO）、白山云、臻选云、猫耳 FM 等 77 个 PCDN 域名与关键字，促使播放器毫秒级切换至阿里云/腾讯云等商业主干网备用 CDN（backup_url），缓解千兆宽带下播放卡顿与拖动转圈。纯规则，无需 MITM 或脚本。
+#!category=实用工具
+#!version=0.1.0
+
+# 原理：B 站播放接口同时下发主地址（常为劣质家宽 PCDN）与商业 CDN 备用地址（backup_url）。
+# 必须使用 REJECT-NO-DROP（立即返回连接拒绝）而非 REJECT-DROP（静默丢包等待超时），播放器才会 0 秒切向备用主干 CDN。
+# 已去重并剔除与视频流无关的 cm.bilibili.com / data.bilibili.com，专注 PCDN 传输节点。
+# 说明与回退：../docs/bilibili-pcdn-block.md
+
+[Rule]
+# Bilibili MCDN & 302 PCDN Scheduling
+DOMAIN-SUFFIX,mcdn.bilivideo.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,mcdn.bilivideo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.bilivideo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,kodo.bilivideo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-WILDCARD,upos-sz-302*.bilivideo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,szbdyd.com,REJECT-NO-DROP,extended-matching
+
+# Bilibili / Maoer FM Audio PCDN
+DOMAIN-SUFFIX,solseed.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,solseedr.cn,REJECT-NO-DROP,extended-matching
+
+# PaiOu Cloud (PPIO 派欧云) PCDN Infrastructure
+DOMAIN-SUFFIX,ppgslb.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppgslb.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,eeeam.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,pocedsgslb.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,paigod.work,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,scwl.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,scsd.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,paisine.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,pplabs.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.cloud,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.online,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.work,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppio.net.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppos.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,paicosine.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,pai-net.work,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,paigpu.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,dddfe.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,demoforge.site,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppiocloud.site,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppinfra.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppiocdn.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ppiocdn.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,nexusedgeio.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,pyrcms.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,pyedsgslb.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,thefirstchain.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,gncrr.live,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,xyxyzz.com,REJECT-NO-DROP,extended-matching
+
+# PaiOu Cloud / Bilibili PCDN Disguised Edge Domains
+DOMAIN-SUFFIX,mountaintoys.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,abcdefgaijkl.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,abcdegghijkl.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,wiebaijitamo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,opqrsduvwxyz.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zyxwvutsrqpo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,clipspacexyy.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,netvisorhub.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,lmnopqrstuvw.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,quantazoomz.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,stormfluxixx.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,datapixelzzx.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ijklmnopqrst.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,flexcloudyz.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,dooquuequezi.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,taishoopecei.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,qrstuvwxyzab.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zeicaefiegoh.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zonerushappz.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,techvortexz1.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,alphawebzzz.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,gliderboxxyy.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ahdohpiechei.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,xionguamaqui.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,gaetausohyei.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,roongeimahwo.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,kaiwaijaicai.com,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,ourdvsss.com,REJECT-NO-DROP,extended-matching
+
+# ZhenXuanYun (臻选云（湖北）科技有限公司) PCDN
+DOMAIN-SUFFIX,zhenxyun.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zhenxcloud.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zhenidc.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zxycdn.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zhenxuanidc.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zhenxuancdn.cn,REJECT-NO-DROP,extended-matching
+DOMAIN-SUFFIX,zhenxuancloud.com,REJECT-NO-DROP,extended-matching
+
+# Other PCDN Providers (雾楚云等)
+DOMAIN-KEYWORD,smogfly,REJECT-NO-DROP,extended-matching
+DOMAIN-KEYWORD,wuchuyun,REJECT-NO-DROP,extended-matching
+DOMAIN-KEYWORD,wuchucloud,REJECT-NO-DROP,extended-matching
