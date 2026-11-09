@@ -40,7 +40,7 @@
 
 ## VPS 简洁流量面板脚本
 
-[VPS-TrafficPanel.js 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/VPS-TrafficPanel.js) 支持多个面板共用同一远程脚本，分别传入监控地址、配额、重置日和请求策略。只显示流量、监控请求延时及重置天数，不添加分流规则。私人接口地址保留在本机参数中。引用方式、数据口径和限制见 [VPS 面板说明](docs/vps-traffic-panel.md)。
+[VPS-TrafficPanel.js 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/VPS-TrafficPanel.js)（`0.2.0`）支持**单节点独立面板**与**二合一 / 多节点合并面板**（最多 6 台并发），可为每台 VPS 分别指定监控地址、流量配额、月重置日、请求策略与超时时间；任一节点超时或离线不影响其余已完成节点的真实流量展示。只显示流量、监控请求延时及重置天数，不添加分流规则；私人接口地址保留在本机参数中。引用方式、数据口径和限制见 [VPS 面板说明](docs/vps-traffic-panel.md)。
 
 ## Cloudflare 一键优选（预览版）
 
@@ -185,6 +185,8 @@ python3 tests/test_bilibili_pcdn_block.py
 python3 tests/test_iringo_modules.py
 python3 scripts/sync_iringo_upstream.py --check
 node --check scripts/Direct-Link.js
+node --check scripts/VPS-TrafficPanel.js
+node --test tests/vps-traffic-panel.test.cjs
 ```
 
 广告模块构建只需 Python 3；规则测试还需 jq 1.7+。`build_amap.py` 生成高德测试版。测试检查 URL 范围、过滤逻辑、保留字段及未知结构兼容，不能替代手机验证。
