@@ -33,6 +33,10 @@
 
 [Alibaba-Direct.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/Alibaba-Direct.list) 包含 13 条 `DOMAIN-SUFFIX` 规则（淘宝、天猫、支付宝、菜鸟及阿里静态资源），通过主配置的 `RULE-SET` 引用并指定直连策略。**必须放在所有去广告拒绝规则之后**，否则公共拒绝列表在这些后缀下拦截的广告与统计子域名会被直连放行；也因此不做成模块。不含 IP、ASN 或阿里云通用域名。引用方式与顺序要求见[阿里系直连说明](docs/alibaba-direct.md)。
 
+## 微信输入法离线阻断规则集
+
+[WeType-Reject.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/WeType-Reject.list) 包含 9 条 `DOMAIN-SUFFIX` / `DOMAIN-KEYWORD` 规则，覆盖微信输入法（WeType）专属云端接口、更新域名及腾讯客户端通用统计/崩溃上报 SDK（灯塔、Bugly、链路追踪）。通过主配置的 `RULE-SET` 引用并指定拒绝策略与 `extended-matching`，**必须放在所有 `qq.com` 及国内直连规则之前**。不整域拦截微信主通信域，也不包含游戏反作弊遥测或宽泛 `ime` 关键字。引用方式、顺序与限制见[微信输入法阻断说明](docs/wetype-reject.md)。
+
 ## VPS 简洁流量面板脚本
 
 [VPS-TrafficPanel.js 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/VPS-TrafficPanel.js) 支持多个面板共用同一远程脚本，分别传入监控地址、配额、重置日和请求策略。只显示流量、监控请求延时及重置天数，不添加分流规则。私人接口地址保留在本机参数中。引用方式、数据口径和限制见 [VPS 面板说明](docs/vps-traffic-panel.md)。
@@ -169,6 +173,7 @@ python3 tests/test_wechat_adblock.py
 python3 tests/test_didi_adblock.py
 python3 tests/test_freshippo_adblock.py
 python3 tests/test_alibaba_direct.py
+python3 tests/test_wetype_reject.py
 python3 tests/test_direct_link.py
 python3 tests/test_iringo_modules.py
 python3 scripts/sync_iringo_upstream.py --check

@@ -1,0 +1,17 @@
+# 微信输入法离线阻断规则集（2026-11-09）
+# 用途：阻断微信输入法（WeType）云端通信、资源更新及腾讯客户端通用统计/崩溃上报接口，配合本地模式使用。
+# 引用时必须放在所有 qq.com / weixin.qq.com 及国内直连规则之前，建议搭配 REJECT（或 REJECT-DROP）与 extended-matching。
+# 不含 weixin.qq.com / qq.com 整域、不含 tpstelemetry.tencent.com（游戏安全遥测）、不含宽泛 DOMAIN-KEYWORD,ime。
+
+# 微信输入法专属业务、云词库与静态资源
+DOMAIN-SUFFIX,wetype.weixin.qq.com
+DOMAIN-SUFFIX,wetype.wxqcloud.qq.com
+DOMAIN-SUFFIX,z.weixin.qq.com
+DOMAIN-SUFFIX,ime.weixin.qq.com
+DOMAIN-KEYWORD,wetype
+DOMAIN-KEYWORD,wxime
+
+# 腾讯客户端通用行为统计与崩溃上报 SDK（灯塔 / Bugly / 链路追踪）
+DOMAIN-SUFFIX,beacon.qq.com
+DOMAIN-SUFFIX,bugly.qq.com
+DOMAIN-SUFFIX,trace.qq.com
