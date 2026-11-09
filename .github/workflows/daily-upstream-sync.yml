@@ -1,0 +1,44 @@
+name: Daily Upstream Sync (AI Rules & iRingo)
+
+on:
+  schedule:
+    # 每天 11:17（北京时间 / UTC+8）自动巡检上游 AI 规则集与 iRingo 正式版 Release
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Sync upstream AI rules (Sukka AI & Apple Intelligence)
+        run: |
+          python3 scripts/sync_ai_rules.py
+          python3 tests/test_ai_list.py
+
+      - name: Sync upstream iRingo release bundles
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/sync_iringo_upstream.py
+          python3 tests/test_iringo_modules.py
+
+      - name: Commit and push if updated
+        run: |
+          if [ -n "$(git status --porcelain rules/AI.list src/ai_upstream_cache.json scripts/iringo/ modules/iRingo-*.sgmodule)" ]; then
+            git config --local user.name 'nuvora-f44c84'
+            git config --local user.email '3013056+nuvora-f44c84@users.noreply.github.com'
+            git add rules/AI.list src/ai_upstream_cache.json scripts/iringo/ modules/iRingo-*.sgmodule
+            git commit -m "chore(sync): daily sync upstream AI rules and iRingo bundles"
+            git push origin HEAD:main
+          else
+            echo "No upstream changes detected."
+          fi

@@ -1,5 +1,5 @@
 #!name = 天气 · 美标 AQI（iRingo）
-#!desc = 0.1.1 测试版。使用官方 WeatherKit v3.3.2 脚本（由本仓库 raw 地址直供并每周自动巡检上游更新），默认美标 InstantCast AQI；保留上游天气、降水与预警设置。安装后停用其他 WeatherKit 模块及本地天气修复模块，避免重复匹配。
+#!desc = 0.1.1 测试版。使用官方 WeatherKit v3.3.2 脚本（由本仓库 raw 地址直供并每日自动巡检上游更新），默认美标 InstantCast AQI；保留上游天气、降水与预警设置。安装后停用其他 WeatherKit 模块及本地天气修复模块，避免重复匹配。
 #!openUrl = http://boxjs.com/#/app/iRingo.WeatherKit
 #!author = VirgilClyne[https://github.com/VirgilClyne],WordlessEcho[https://github.com/WordlessEcho],001[https://github.com/001ProMax],hhh2210[https://github.com/hhh2210]
 #!homepage = https://github.com/nuvora-f44c84/surge-modules/blob/main/docs/iringo-weather-us.md

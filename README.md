@@ -19,16 +19,16 @@
 | 滴滴出行 · 广告过滤 | 0.1.0 · 清理首页横幅、顺风车/代驾弹窗及推荐目的地，取消钱包与导航白名单，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/DiDi-AdBlock-Lite.sgmodule) |
 | 盒马 · 广告与页面精简 | 0.1.0 · 精简首页、底栏、我的页面及推荐流，修复单页规则冲突，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Freshippo-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
-| 天气 · 美标 AQI（iRingo） | 0.1.1 · 官方 WeatherKit 脚本（本仓库 Raw 直供 + 每周自动巡检上游），美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
+| 天气 · 美标 AQI（iRingo） | 0.1.1 · 官方 WeatherKit 脚本（本仓库 Raw 直供 + 每日自动巡检上游），美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
-| Siri 与聚焦搜索（iRingo） | 0.1.1 · 官方 Siri 脚本（本仓库 Raw 直供 + 每周自动巡检上游），解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
-| TestFlight · 区域与通用应用（iRingo） | 0.1.1 · 官方 TestFlight 脚本（本仓库 Raw 直供 + 每周自动巡检上游），解除区域限制并开启通用应用安装，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-TestFlight.sgmodule) |
+| Siri 与聚焦搜索（iRingo） | 0.1.1 · 官方 Siri 脚本（本仓库 Raw 直供 + 每日自动巡检上游），解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
+| TestFlight · 区域与通用应用（iRingo） | 0.1.1 · 官方 TestFlight 脚本（本仓库 Raw 直供 + 每日自动巡检上游），解除区域限制并开启通用应用安装，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-TestFlight.sgmodule) |
 | 外链中转页 · 自动直跳 | 0.1.0 · 请求阶段自动解码并 302 跳过知乎、CSDN、掘金、简书、QQ/QQ邮箱、微博外链确认页，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Direct-Link.sgmodule) |
 | 哔哩哔哩 · PCDN 节点屏蔽 | 0.1.0 · 使用 `REJECT-NO-DROP` 屏蔽 77 个 B 站/猫耳 FM/派欧云/臻选云 PCDN 域名，促使播放器毫秒级切换商业主干 CDN，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Bilibili-PCDN-Block.sgmodule) |
 
-## AI 专用域名补充规则集
+## AI 统一分流规则集（`AI.list`）与 X 规则集（`X.list`）
 
-[AI-Supplement.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI-Supplement.list) 包含 197 条 AI 服务域名规则，用于补充主列表。通过主配置的 `RULE-SET` 引用并指定已有策略组；不在模块页面安装，也不包含节点或脚本。保留局域网、国内 AI 等前置规则及既有分流顺序。由本仓库人工维护，不自动合并上游。安装、范围与来源见 [AI 补充规则说明](docs/ai-supplement.md)。
+[AI.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI.list) 聚合了 Apple Intelligence（PCC 与地区资格校验）、OpenAI、Anthropic/Claude、Google Gemini/AI Studio/Antigravity/NotebookLM、xAI/Grok、Meta AI/Muse 及 Cursor/Windsurf/Copilot 等共 259 条去重规则，由 GitHub Actions 每日自动巡检上游 `Sukka ai.conf` 与 `apple_intelligence.conf`（自动剔除 `api.github.com` 误伤项与中文 Siri 核心直连域名）。主配置只需引用一行，放在国内 AI 直连（`cn.list`）之后、[X.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/X.list) 与 `Apple_All` 之前。原补充表 [`rules/AI-Supplement.list`](rules/AI-Supplement.list) 保留路径兼容。详见 [AI 统一规则集说明](docs/ai-list.md)。
 
 ## 阿里系核心业务直连规则集
 
@@ -179,6 +179,7 @@ python3 tests/test_didi_adblock.py
 python3 tests/test_freshippo_adblock.py
 python3 tests/test_alibaba_direct.py
 python3 tests/test_wetype_reject.py
+python3 tests/test_ai_list.py
 python3 tests/test_direct_link.py
 python3 tests/test_bilibili_pcdn_block.py
 python3 tests/test_iringo_modules.py

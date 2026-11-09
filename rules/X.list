@@ -1,0 +1,17 @@
+# X / Twitter 专用域名规则集（X.list）
+# 登录、共享 API、图片/视频静态资源、短链与官方客户端域名。
+# 顺序要求：须置于 AI.list 之后，以便 grok.x.com 优先命中「📟 智能助理」。
+# 来源：blackmatrix7/ios_rule_script Twitter.list 域名子集（不含进程、IP、ASN 与宽泛关键字）。
+
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,twitter.com
+DOMAIN-SUFFIX,twitteroauth.com
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,twimg.co
+DOMAIN-SUFFIX,twimg.org
+DOMAIN-SUFFIX,t.co
+DOMAIN-SUFFIX,twttr.com
+DOMAIN-SUFFIX,twttr.net
+DOMAIN-SUFFIX,twtrdns.net
+DOMAIN-SUFFIX,twvid.com
+DOMAIN-SUFFIX,tweetdeck.com
