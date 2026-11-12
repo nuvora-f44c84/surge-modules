@@ -14,6 +14,10 @@ DOMAIN-SUFFIX,apple-relay.cloudflare.com
 DOMAIN-SUFFIX,apple-relay.fastly-edge.com
 DOMAIN-SUFFIX,apple-relay.akamaized.net
 DOMAIN-SUFFIX,cp4.cloudflare.com
+DOMAIN,mask-api.icloud.com
+DOMAIN,mask.icloud.com
+DOMAIN,mask-h2.icloud.com
+DOMAIN,ss-cleanup-proxy-prod.us-east-1m.app.apple.com
 
 # OpenAI / ChatGPT / Sora / Codex
 DOMAIN-SUFFIX,openai.com

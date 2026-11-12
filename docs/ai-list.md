@@ -21,7 +21,7 @@ RULE-SET,https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rule
 1. **置于国内 AI 直连（`cn.list`）之后**：确保 DeepSeek、豆包、通义千问、Kimi 等国内模型优先命中直连。
 2. **置于 `X.list` 之前**：`AI.list` 包含 `DOMAIN-SUFFIX,grok.x.com`，而 [`rules/X.list`](../rules/X.list) 包含 `DOMAIN-SUFFIX,x.com`；将 `AI.list` 放在 `X.list` 之上，才能保证 `grok.x.com` 进入 `📟 智能助理`，而普通 X 图片视频继续走 `🚀 我的节点`。
 3. **置于 `Apple_All_No_Resolve.list` 之前，且绝不混入中文 Siri 核心域名**：
-   - `AI.list` 仅纳入 Apple Intelligence 的 PCC 隐私云计算中继（`apple-relay.*`、`cp4.cloudflare.com`）与地区资格校验（`gspe1-ssl.ls.apple.com`）。
+   - `AI.list` 仅纳入 Apple Intelligence 的 PCC 隐私云计算中继（`apple-relay.*`、`cp4.cloudflare.com`）、匿名令牌签发（`mask-api.icloud.com`、`mask.icloud.com`、`mask-h2.icloud.com`）、相册消除模型下载代理（`ss-cleanup-proxy-prod.us-east-1m.app.apple.com`）与地区资格校验（`gspe1-ssl.ls.apple.com`）。
    - 中文 Siri 核心后端（`guzzoni.apple.com`、`siri.apple.com`、`dejavu.apple.com`、`sequoia.apple.com`、`smoot.apple.com`）必须保留在主配置的 `DIRECT` 直连与 `skip-proxy` / `always-real-ip` 中，[`scripts/sync_ai_rules.py`](../scripts/sync_ai_rules.py) 已内置硬性拦截守卫，防止上游误加导致中文 Siri 报“遇到了一点问题”。
 
 ## 覆盖分区与每日自动同步
