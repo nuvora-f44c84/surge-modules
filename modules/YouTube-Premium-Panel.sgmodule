@@ -1,6 +1,6 @@
 #!name=YouTube · Premium 解锁面板
-#!desc=0.1.0 测试版。检测当前分流或指定策略下的 YouTube Premium 地区可用性与个人月费参考价；校验完整 SPunlimited 购买入口，区分仅限 Lite、国家未验证与风控拦截。无需 MITM 或重写，远程脚本自动加载。
-#!version=0.1.0
+#!desc=0.1.1 测试版。检测当前分流或指定策略下的 YouTube Premium 地区可用性与个人月费参考价，自动显示实际落地的节点名称；校验完整 SPunlimited 购买入口，区分仅限 Lite、国家未验证与风控拦截。无需 MITM 或重写，远程脚本自动加载。
+#!version=0.1.1
 #!category=YouTube
 #!homepage=https://github.com/nuvora-f44c84/surge-modules
 #!arguments=policy:auto,price:true,timeout:8,interval:3600,title:YouTube Premium

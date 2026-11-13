@@ -1,6 +1,6 @@
 # YouTube · Premium 解锁面板（测试版）
 
-远程 Surge 面板模块（`0.1.0`），用于查看当前网络分流或指定代理策略下的 YouTube Premium 地区可用性、个人方案参考月费与请求耗时。模块自动拉取远程脚本，**无需 MITM、无需重写、不修改主配置分流规则，也不携带任何账号 Cookie**。
+远程 Surge 面板模块（`0.1.1`），用于查看当前网络分流或指定代理策略下的 YouTube Premium 地区可用性、实际落地节点名称、个人方案参考月费与请求耗时。模块自动拉取远程脚本，**无需 MITM、无需重写、不修改主配置分流规则，也不携带任何账号 Cookie**。
 
 ## 安装
 
@@ -32,20 +32,20 @@ https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/YouTu
 
 ## 显示效果示例
 
-1. **单策略模式（默认）**
+1. **单策略模式（默认，自动识别实际落地节点名称）**
    - 标题：`YouTube Premium · 已解锁`
    - 内容：
      ```text
      地区：🇺🇸 美国 (US) · 个人 $15.99/月
-     策略：当前规则 · 220 ms · 12:30
+     节点：🇺🇸 Example Node · 220 ms · 12:30
      ```
 
-2. **多策略同卡对比模式**（如设置 `policy=PolicyA,PolicyB`）
+2. **多策略同卡对比模式**（如设置 `policy=GroupA,GroupB`，自动展开各自落地节点）
    - 标题：`YouTube Premium · 1/2 已解锁 · 12:30`
    - 内容：
      ```text
-     PolicyA：已解锁 · 🇯🇵 日本 · ¥1,280/月 · 185ms
-     PolicyB：未解锁 · 🇲🇴 澳门 · 92ms
+     🇯🇵 Example JP：已解锁 · 🇯🇵 日本 · ¥1,280/月 · 185ms
+     🇲🇴 Example MO：未解锁 · 🇲🇴 澳门 · 92ms
      ```
 
 3. **主配置独立 `[Script]` / `[Panel]` 引用示例（可选）**

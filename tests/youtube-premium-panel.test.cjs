@@ -116,7 +116,7 @@ function runSurgePanel(options = {}) {
     }
   }
 
-  vm.runInNewContext(code, {
+  const sandbox = {
     Date: FixedDate,
     Intl,
     $argument:
@@ -130,7 +130,16 @@ function runSurgePanel(options = {}) {
         callbacks.push(cb);
       }
     }
-  });
+  };
+
+  if (options.selectGroupDetails) {
+    sandbox.$surge = { selectGroupDetails: options.selectGroupDetails };
+  }
+  if (options.httpAPI) {
+    sandbox.$httpAPI = (method, apiPath, body, cb) => options.httpAPI(method, apiPath, body, cb, () => now);
+  }
+
+  vm.runInNewContext(code, sandbox);
 
   return {
     results,
@@ -145,7 +154,7 @@ function runSurgePanel(options = {}) {
 
 test("module file uses stable raw remote script path and requires no MITM or rules", () => {
   assert.match(sgmodule, /^#!name=YouTube · Premium 解锁面板$/m);
-  assert.match(sgmodule, /^#!version=0\.1\.0$/m);
+  assert.match(sgmodule, /^#!version=0\.1\.1$/m);
   assert.match(
     sgmodule,
     /script-path=https:\/\/raw\.githubusercontent\.com\/nuvora-f44c84\/surge-modules\/main\/scripts\/YouTube-Premium-Panel\.js/
@@ -155,8 +164,25 @@ test("module file uses stable raw remote script path and requires no MITM or rul
   assert.match(sgmodule, /\[Panel\]/);
 });
 
-test("default auto policy follows Surge routing rules without Cookie header and extracts Individual monthly price", () => {
-  const r = runSurgePanel();
+test("default auto policy resolves actual leaf node name via $httpAPI recent requests and extracts Individual monthly price", () => {
+  const r = runSurgePanel({
+    httpAPI: (_method, apiPath, _body, cb, getNow) => {
+      if (apiPath === "/v1/requests/recent") {
+        cb({
+          requests: [
+            {
+              id: 42,
+              URL: "www.youtube.com:443",
+              policyName: "🇺🇸 Example Node",
+              startDate: getNow() / 1000 - 0.2
+            }
+          ]
+        });
+        return;
+      }
+      cb({});
+    }
+  });
   assert.equal(r.requests.length, 1);
   assert.equal(r.requests[0].url, "https://www.youtube.com/premium?hl=en");
   assert.equal(r.requests[0].policy, undefined);
@@ -167,11 +193,64 @@ test("default auto policy follows Surge routing rules without Cookie header and 
   assert.deepEqual(r.results, [
     {
       title: "YouTube Premium · 已解锁",
-      content: "地区：🇺🇸 美国 (US) · 个人 $15.99/月\n策略：当前规则 · 220 ms · 12:30",
+      content: "地区：🇺🇸 美国 (US) · 个人 $15.99/月\n节点：🇺🇸 Example Node · 220 ms · 12:30",
       icon: "play.rectangle.fill",
       "icon-color": "#34C759"
     }
   ]);
+});
+
+test("unwraps nested select groups and url-test winners down to the concrete leaf proxy node", () => {
+  const r = runSurgePanel({
+    argument: "_raw=1&timeout=8&price=true&title=YouTube Premium&policy=YouTubeGroup",
+    selectGroupDetails: () => ({
+      groups: { YouTubeGroup: ["US-Auto", "HK-Node"] },
+      decisions: { YouTubeGroup: "US-Auto" }
+    }),
+    httpAPI: (_method, apiPath, _body, cb) => {
+      if (apiPath === "/v1/policy_groups/test_results") {
+        cb({ "US-Auto": { winner: "🇺🇸 Leaf Node 01" } });
+        return;
+      }
+      cb({});
+    }
+  });
+
+  r.reply({ data: syntheticPage({ region: "US" }), elapsedMs: 180 });
+  assert.equal(
+    r.results[0].content,
+    "地区：🇺🇸 美国 (US) · 个人 $15.99/月\n节点：🇺🇸 Leaf Node 01 · 180 ms · 12:30"
+  );
+});
+
+test("falls back to global outbound leaf node or hangs-safe timer when recent requests are filtered", () => {
+  // Global proxy mode fallback
+  const rGlobal = runSurgePanel({
+    selectGroupDetails: () => ({
+      groups: { Proxy: ["🇸🇬 SG Leaf"] },
+      decisions: { Proxy: "🇸🇬 SG Leaf" }
+    }),
+    httpAPI: (_method, apiPath, _body, cb) => {
+      if (apiPath === "/v1/outbound") return cb({ mode: "proxy" });
+      if (apiPath === "/v1/outbound/global") return cb({ policy: "Proxy" });
+      cb({});
+    }
+  });
+  rGlobal.reply({ data: syntheticPage({ region: "SG", individualPrice: "SGD 13.98/month" }), elapsedMs: 90 });
+  assert.match(rGlobal.results[0].content, /节点：🇸🇬 SG Leaf · 90 ms · 12:30/);
+
+  // Hung $httpAPI still finishes cleanly via lookup safety timer
+  const rHung = runSurgePanel({
+    argument: "_raw=1&timeout=8&price=false&title=YouTube Premium&policy=🇺🇸 DirectNode",
+    httpAPI: () => {} // never calls callback
+  });
+  rHung.reply({ data: syntheticPage({ region: "US" }), elapsedMs: 100 });
+  assert.equal(rHung.results.length, 0);
+  const lookupTimer = rHung.timers.find(t => t.delay === 300);
+  assert.ok(lookupTimer);
+  lookupTimer.fn();
+  assert.equal(rHung.results.length, 1);
+  assert.match(rHung.results[0].content, /节点：🇺🇸 DirectNode · 100 ms · 12:30/);
 });
 
 test("raw module argument preserves special characters like %, +, |, & and spaces in policy names", () => {
@@ -184,7 +263,10 @@ test("raw module argument preserves special characters like %, +, |, & and space
 
   r.reply({ data: syntheticPage({ region: "HK", individualPrice: "HK$78.00/month" }), elapsedMs: 95 });
   assert.equal(r.results[0].title, "YT 解锁 · 已解锁");
-  assert.match(r.results[0].content, /^地区：🇭🇰 香港 \(HK\)\n策略：🇭🇰 香港 01 \| IEPL… · 95 ms · 12:30$/);
+  assert.equal(
+    r.results[0].content,
+    "地区：🇭🇰 香港 (HK)\n节点：🇭🇰 香港 01 | IEPL + BGP &… · 95 ms · 12:30"
+  );
 });
 
 test("TW region omits U+1F1F9 U+1F1FC flag sequence so CH/A hardware never renders a missing glyph box", () => {
@@ -192,37 +274,40 @@ test("TW region omits U+1F1F9 U+1F1FC flag sequence so CH/A hardware never rende
   assert.equal(P.formatRegion("TW", false), "台湾 (TW)");
   assert.ok(!P.formatRegion("TW", false).includes("\uD83C\uDDF9\uD83C\uDDFC"));
 
-  const r = runSurgePanel();
+  const r = runSurgePanel({
+    httpAPI: (_m, p, _b, cb, getNow) =>
+      cb(
+        p === "/v1/requests/recent"
+          ? { requests: [{ id: 1, URL: "www.youtube.com:443", policyName: "TW-Hinet", startDate: getNow() / 1000 }] }
+          : {}
+      )
+  });
   r.reply({ data: syntheticPage({ region: "TW", individualPrice: "NT$199.00/month" }), elapsedMs: 110 });
   assert.equal(
     r.results[0].content,
-    "地区：台湾 (TW) · 个人 NT$199.00/月\n策略：当前规则 · 110 ms · 12:30"
+    "地区：台湾 (TW) · 个人 NT$199.00/月\n节点：TW-Hinet · 110 ms · 12:30"
   );
   assert.ok(!JSON.stringify(r.results).includes("\uD83C\uDDF9\uD83C\uDDFC"));
 });
 
 test("distinguishes region_unavailable, lite_only, country_unverified, challenge redirects, rate limits and invalid policies", () => {
-  // 1. Unavailable with detected region (e.g. Macau)
   const unavail = runSurgePanel();
   unavail.reply({ data: syntheticPage({ region: "MO", unavailable: true }), elapsedMs: 88 });
   assert.equal(unavail.results[0].title, "YouTube Premium · 未解锁");
   assert.match(unavail.results[0].content, /地区：🇲🇴 澳门 \(MO\) · 该地区未提供服务/);
   assert.equal(unavail.results[0]["icon-color"], "#FF3B30");
 
-  // 2. Premium Lite only
   const lite = runSurgePanel();
   lite.reply({ data: syntheticPage({ region: "TH", liteOnly: true }), elapsedMs: 160 });
   assert.equal(lite.results[0].title, "YouTube Premium · 仅 Lite");
   assert.match(lite.results[0].content, /地区：🇹🇭 泰国 \(TH\) · 仅检测到 Lite \(\$7\.99\/月\)/);
   assert.equal(lite.results[0]["icon-color"], "#FF9500");
 
-  // 3. Country unverified
   const unverified = runSurgePanel();
   unverified.reply({ data: syntheticPage({ region: "US", unverified: true }), elapsedMs: 190 });
   assert.equal(unverified.results[0].title, "YouTube Premium · 国家未验证");
   assert.equal(unverified.results[0]["icon-color"], "#FF9500");
 
-  // 4. HTTP 302 redirect to Google sorry / consent page
   for (const location of [
     "https://www.google.com/sorry/index?continue=https://www.youtube.com/premium",
     "https://consent.youtube.com/m?continue=https://www.youtube.com/premium"
@@ -233,12 +318,10 @@ test("distinguishes region_unavailable, lite_only, country_unverified, challenge
     assert.equal(ch.results[0]["icon-color"], "#FF9500");
   }
 
-  // 5. HTTP 429 rate limit
   const rl = runSurgePanel();
   rl.reply({ status: 429, data: "", elapsedMs: 100 });
   assert.equal(rl.results[0].title, "YouTube Premium · 请求受限");
 
-  // 6. Non-existent Surge policy error
   const badPol = runSurgePanel({
     argument: "_raw=1&timeout=8&price=true&title=YouTube Premium&policy=MissingGroup"
   });
@@ -268,12 +351,16 @@ test("rejects generic marketing, disabled buttons, conflicting regions, oversize
   assert.equal(P.initialData('var ytInitialData = {"contents": evil()};'), null);
 });
 
-test("multi-policy comparison works with both comma-separated module policy and URL-encoded script arguments, surviving partial timeouts", () => {
+test("multi-policy comparison unwraps leaf nodes and survives partial timeouts", () => {
   const r1 = runSurgePanel({
-    argument: "_raw=1&timeout=6&price=true&title=YT 对比&policy=ProxyJP,DIRECT"
+    argument: "_raw=1&timeout=6&price=true&title=YT 对比&policy=GroupJP,DIRECT",
+    selectGroupDetails: () => ({
+      groups: { GroupJP: ["🇯🇵 Example JP"] },
+      decisions: { GroupJP: "🇯🇵 Example JP" }
+    })
   });
   assert.equal(r1.requests.length, 2);
-  assert.equal(r1.requests[0].policy, "ProxyJP");
+  assert.equal(r1.requests[0].policy, "GroupJP");
   assert.equal(r1.requests[1].policy, "DIRECT");
 
   r1.reply({ index: 0, data: syntheticPage({ region: "JP", individualPrice: "¥1,280/month" }), elapsedMs: 150 });
@@ -284,20 +371,23 @@ test("multi-policy comparison works with both comma-separated module policy and 
   assert.equal(r1.results[0].title, "YT 对比 · 1/2 已解锁 · 12:30");
   assert.equal(
     r1.results[0].content,
-    "ProxyJP：已解锁 · 🇯🇵 日本 · ¥1,280/月 · 150ms\nDIRECT：超时 (>6s) (150ms)"
+    "🇯🇵 Example JP：已解锁 · 🇯🇵 日本 · ¥1,280/月 · 150ms\nDIRECT：超时 (>6s) (150ms)"
   );
   assert.equal(r1.results[0]["icon-color"], "#FF9500");
 
-  // Standalone URL-encoded indexed arguments
+  // Standalone URL-encoded indexed arguments with custom alias + unwrapped leaf node
   const r2 = runSurgePanel({
     argument: new URLSearchParams({
-      policy1: "Example US",
-      name1: "美区",
-      policy2: "Example MO",
-      name2: "澳区",
+      policy1: "GroupUS",
+      name1: "主力",
+      policy2: "🇲🇴 Example MO",
       price: "false",
       timeout: "5"
-    }).toString()
+    }).toString(),
+    selectGroupDetails: () => ({
+      groups: { GroupUS: ["🇺🇸 Example US"] },
+      decisions: { GroupUS: "🇺🇸 Example US" }
+    })
   });
   assert.equal(r2.requests.length, 2);
   r2.reply({ index: 0, data: syntheticPage({ region: "US" }), elapsedMs: 180 });
@@ -305,7 +395,7 @@ test("multi-policy comparison works with both comma-separated module policy and 
   assert.equal(r2.results[0].title, "YouTube Premium · 1/2 已解锁 · 12:30");
   assert.equal(
     r2.results[0].content,
-    "美区：已解锁 · 🇺🇸 美国 · 180ms\n澳区：未解锁 · 🇲🇴 澳门 · 250ms"
+    "主力 (🇺🇸 Example US)：已解锁 · 🇺🇸 美国 · 180ms\n🇲🇴 Example MO：未解锁 · 🇲🇴 澳门 · 250ms"
   );
   assert.equal(r2.results[0]["icon-color"], "#FF3B30");
 });

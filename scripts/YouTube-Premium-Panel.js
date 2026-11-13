@@ -1,14 +1,15 @@
-// YouTube Premium unlock status panel v0.1.0.
-// Queries the public https://www.youtube.com/premium?hl=en landing page without cookies
-// and verifies an active SPunlimited (/premium) purchase offer rather than relying on
-// negative text matching alone.
+// YouTube Premium unlock status panel v0.1.1.
+// Queries the public https://www.youtube.com/premium?hl=en landing page without cookies,
+// verifies an active SPunlimited (/premium) purchase offer, and resolves the actual leaf
+// proxy node name (e.g. "🇺🇸 Dmit") via Surge's internal $httpAPI / $surge APIs.
 (function (root) {
   "use strict";
 
-  const VERSION = "0.1.0";
+  const VERSION = "0.1.1";
   const MAX_HTML = 2500000;
   const MAX_NODES = 25000;
   const MAX_POLICIES = 4;
+  const NODE_LOOKUP_TIMEOUT_MS = 300;
   const TARGET_URL = "https://www.youtube.com/premium?hl=en";
   const UA =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
@@ -132,7 +133,7 @@
     return flag ? `${flag} ${label}` : label;
   }
 
-  function cleanText(value, maxLen = 20) {
+  function cleanText(value, maxLen = 24) {
     const cleaned = String(value || "")
       .replace(/[\u200b-\u200f\ufeff\r\n\t\u0000-\u001f]/g, " ")
       .replace(/\s+/g, " ")
@@ -472,8 +473,9 @@
         const nVal = i === 1 ? (settings.name1 ?? settings.name) : settings[`name${i}`];
         if (pVal === undefined && nVal === undefined) continue;
         const policy = normalizePolicy(pVal);
-        const label = cleanText(nVal || policy || "当前规则", 14) || `策略${i}`;
-        targets.push({ policy, label });
+        const customName = nVal !== undefined && String(nVal).trim() !== "" ? cleanText(nVal, 14) : null;
+        const label = customName || cleanText(policy || "未识别节点", 24) || `节点${i}`;
+        targets.push({ policy, customName, label });
       }
     } else {
       const rawPolicy = String(settings.policy === undefined ? "" : settings.policy);
@@ -490,20 +492,265 @@
 
       for (const part of parts) {
         const policy = normalizePolicy(part);
-        const label = cleanText(policy || "当前规则", 16) || "当前规则";
-        targets.push({ policy, label });
+        const label = cleanText(policy || "未识别节点", 24) || "未识别节点";
+        targets.push({ policy, customName: null, label });
       }
     }
 
     if (!targets.length) {
-      targets.push({ policy: null, label: "当前规则" });
+      targets.push({ policy: null, customName: null, label: "未识别节点" });
     }
 
     return { title, showPrice, timeoutSec, targets };
   }
 
-  function renderSingle(cfg, target, result, latencyMs, nowDate) {
-    const meta = `策略：${target.label} · ${latencyMs} ms · ${formatTime(nowDate)}`;
+  // Follow select groups and automatic test groups down to the concrete leaf proxy node.
+  function unwrapPolicyName(policyName, selectDetails, testResults) {
+    if (!policyName || typeof policyName !== "string") return null;
+    let current = policyName.trim();
+    if (!current) return null;
+    const decisions =
+      selectDetails && selectDetails.decisions && typeof selectDetails.decisions === "object"
+        ? selectDetails.decisions
+        : null;
+    const results = testResults && typeof testResults === "object" ? testResults : null;
+    const visited = new Set();
+
+    for (let hop = 0; hop < 10; hop += 1) {
+      if (visited.has(current)) break;
+      visited.add(current);
+      if (decisions && typeof decisions[current] === "string" && decisions[current].trim()) {
+        current = decisions[current].trim();
+        continue;
+      }
+      if (
+        results &&
+        results[current] &&
+        typeof results[current].winner === "string" &&
+        results[current].winner.trim()
+      ) {
+        current = results[current].winner.trim();
+        continue;
+      }
+      break;
+    }
+    return current;
+  }
+
+  function collectGroupMembers(groupName, policyGroups, selectDetails) {
+    const members = new Set();
+    if (!groupName) return members;
+    const queue = [groupName];
+    const seenGroups = new Set();
+    const groupsMap =
+      selectDetails && selectDetails.groups && typeof selectDetails.groups === "object"
+        ? selectDetails.groups
+        : null;
+
+    while (queue.length && seenGroups.size < 30) {
+      const current = queue.shift();
+      if (!current || seenGroups.has(current)) continue;
+      seenGroups.add(current);
+      members.add(current);
+
+      if (policyGroups && Array.isArray(policyGroups[current])) {
+        for (const item of policyGroups[current]) {
+          const subName = typeof item === "string" ? item : item && item.name;
+          if (typeof subName === "string" && subName.trim()) {
+            members.add(subName.trim());
+            queue.push(subName.trim());
+          }
+        }
+      }
+      if (groupsMap && Array.isArray(groupsMap[current])) {
+        for (const subName of groupsMap[current]) {
+          if (typeof subName === "string" && subName.trim()) {
+            members.add(subName.trim());
+            queue.push(subName.trim());
+          }
+        }
+      }
+    }
+    return members;
+  }
+
+  function normalizeEpochSeconds(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n > 1e11 ? n / 1000 : n;
+  }
+
+  function matchYoutubeRequest(records, startTimeMs, nowMs, targetPolicy, memberSet) {
+    if (!Array.isArray(records) || !records.length) return null;
+    const minSec = startTimeMs / 1000 - 3;
+    const maxSec = nowMs / 1000 + 5;
+    let best = null;
+    let bestScore = -Infinity;
+
+    for (let idx = 0; idx < records.length; idx += 1) {
+      const rec = records[idx];
+      if (!rec || typeof rec !== "object") continue;
+      const rawUrl = String(rec.URL || rec.url || "");
+      if (!/(?:^|https?:\/\/)www\.youtube\.com(?::443|\/|$)/i.test(rawUrl)) continue;
+      const policyName = typeof rec.policyName === "string" ? rec.policyName.trim() : "";
+      if (!policyName) continue;
+
+      const startSec = normalizeEpochSeconds(rec.startDate);
+      const isFresh = startSec === null || (startSec >= minSec && startSec <= maxSec);
+      const isRecent = !isFresh && startSec !== null && startSec >= minSec - 60 && startSec <= maxSec;
+
+      let score = isFresh ? 1000 : isRecent ? 600 : 0;
+      if (/\/premium(?:\?|$)/i.test(rawUrl)) score += 200;
+      if (/script/i.test(String(rec.rule || ""))) score += 40;
+
+      if (targetPolicy) {
+        const orig = typeof rec.originalPolicyName === "string" ? rec.originalPolicyName.trim() : "";
+        if (policyName === targetPolicy || orig === targetPolicy) {
+          score += 300;
+        } else if (memberSet && memberSet.has(policyName)) {
+          score += 150;
+        } else if (isFresh) {
+          // Probably belongs to a different policy in multi-policy mode.
+          score -= 500;
+        }
+      }
+
+      if (startSec !== null) score += Math.min(50, Math.max(-50, startSec - minSec));
+      if (Number.isInteger(rec.id)) score += Math.min(20, rec.id * 0.0001);
+      score -= idx * 0.001;
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = rec;
+      }
+    }
+
+    return bestScore >= 500 ? best : null;
+  }
+
+  function resolveNodeNames(env, states, startTimeMs, callback) {
+    let settled = false;
+    const doneOnce = () => {
+      if (settled) return;
+      settled = true;
+      callback();
+    };
+
+    let selectDetails = null;
+    if (typeof env.selectGroupDetails === "function") {
+      try {
+        selectDetails = env.selectGroupDetails();
+      } catch (_) {}
+    }
+
+    // If $httpAPI is unavailable (e.g. minimal unit-test sandbox), unwrap synchronously and finish.
+    if (typeof env.httpAPI !== "function") {
+      for (const s of states) {
+        const leaf = unwrapPolicyName(s.policy, selectDetails, null);
+        if (leaf) s.nodeName = cleanText(leaf, 24);
+      }
+      doneOnce();
+      return;
+    }
+
+    env.setTimer(doneOnce, NODE_LOOKUP_TIMEOUT_MS);
+
+    const endpoints = [
+      "/v1/requests/recent",
+      "/v1/requests/active",
+      "/v1/policy_groups/test_results",
+      "/v1/policy_groups",
+      "/v1/outbound"
+    ];
+    const payloads = Object.create(null);
+    let pending = endpoints.length;
+
+    const finishLookup = () => {
+      if (settled) return;
+      const nowMs = env.now();
+      const recentList =
+        payloads["/v1/requests/recent"] && Array.isArray(payloads["/v1/requests/recent"].requests)
+          ? payloads["/v1/requests/recent"].requests
+          : [];
+      const activeList =
+        payloads["/v1/requests/active"] && Array.isArray(payloads["/v1/requests/active"].requests)
+          ? payloads["/v1/requests/active"].requests
+          : [];
+      const combined = [...activeList, ...recentList];
+      const testResults = payloads["/v1/policy_groups/test_results"] || null;
+      const policyGroups = payloads["/v1/policy_groups"] || null;
+      const outboundMode =
+        payloads["/v1/outbound"] && typeof payloads["/v1/outbound"].mode === "string"
+          ? payloads["/v1/outbound"].mode
+          : null;
+
+      let needGlobalPolicy = false;
+      for (const s of states) {
+        const members = s.policy ? collectGroupMembers(s.policy, policyGroups, selectDetails) : null;
+        const matched = matchYoutubeRequest(combined, startTimeMs, nowMs, s.policy, members);
+        if (matched && matched.policyName) {
+          const leaf = unwrapPolicyName(matched.policyName, selectDetails, testResults);
+          s.nodeName = cleanText(leaf || matched.policyName, 24);
+          continue;
+        }
+
+        if (s.policy) {
+          const leaf = unwrapPolicyName(s.policy, selectDetails, testResults);
+          s.nodeName = cleanText(leaf || s.policy, 24);
+          continue;
+        }
+
+        if (outboundMode === "direct") {
+          s.nodeName = "DIRECT";
+        } else if (outboundMode === "proxy") {
+          needGlobalPolicy = true;
+        }
+      }
+
+      if (!needGlobalPolicy) {
+        doneOnce();
+        return;
+      }
+
+      try {
+        env.httpAPI("GET", "/v1/outbound/global", null, globalRes => {
+          const globalPolicy =
+            globalRes && typeof globalRes.policy === "string" ? globalRes.policy : null;
+          if (globalPolicy) {
+            const leaf = unwrapPolicyName(globalPolicy, selectDetails, testResults) || globalPolicy;
+            for (const s of states) {
+              if (!s.nodeName && !s.policy) {
+                s.nodeName = cleanText(leaf, 24);
+              }
+            }
+          }
+          doneOnce();
+        });
+      } catch (_) {
+        doneOnce();
+      }
+    };
+
+    for (const ep of endpoints) {
+      try {
+        env.httpAPI("GET", ep, null, res => {
+          if (res && typeof res === "object") {
+            payloads[ep] = res;
+          }
+          pending -= 1;
+          if (pending <= 0) finishLookup();
+        });
+      } catch (_) {
+        pending -= 1;
+        if (pending <= 0) finishLookup();
+      }
+    }
+  }
+
+  function renderSingle(cfg, state, nowDate) {
+    const result = state.result;
+    const displayNode = state.nodeName || state.label || "未识别节点";
+    const meta = `节点：${displayNode} · ${state.latencyMs} ms · ${formatTime(nowDate)}`;
     const regionText = result.region ? formatRegion(result.region, false) : null;
 
     if (result.status === "available") {
@@ -544,7 +791,7 @@
     if (result.reason === "invalid_policy") {
       return {
         title: `${cfg.title} · 策略异常`,
-        content: `未找到策略「${target.label}」，请核对模块参数\n更新时间：${formatTime(nowDate)}`,
+        content: `未找到策略或节点「${state.policy || state.label}」，请核对模块参数\n更新时间：${formatTime(nowDate)}`,
         icon: "exclamationmark.triangle.fill",
         "icon-color": "#FF9500"
       };
@@ -603,25 +850,31 @@
 
     const lines = items.map(item => {
       const r = item.result;
+      const itemLabel = item.customName
+        ? item.nodeName && item.nodeName !== item.customName
+          ? `${item.customName} (${cleanText(item.nodeName, 14)})`
+          : item.customName
+        : cleanText(item.nodeName || item.label, 18);
+
       if (r.status === "available") {
         availableCount += 1;
         const reg = formatRegion(r.region, true);
         const pricePart = cfg.showPrice && r.price ? ` · ${r.price}` : "";
-        return `${item.label}：已解锁 · ${reg}${pricePart} · ${item.latencyMs}ms`;
+        return `${itemLabel}：已解锁 · ${reg}${pricePart} · ${item.latencyMs}ms`;
       }
       if (r.status === "unavailable") {
         maxSeverity = Math.max(maxSeverity, 2);
         const reg = r.region ? ` · ${formatRegion(r.region, true)}` : "";
-        return `${item.label}：未解锁${reg} · ${item.latencyMs}ms`;
+        return `${itemLabel}：未解锁${reg} · ${item.latencyMs}ms`;
       }
       if (r.status === "limited") {
         maxSeverity = Math.max(maxSeverity, 1);
         const reg = r.region ? ` · ${formatRegion(r.region, true)}` : "";
-        return `${item.label}：仅 Lite${reg} · ${item.latencyMs}ms`;
+        return `${itemLabel}：仅 Lite${reg} · ${item.latencyMs}ms`;
       }
       if (r.reason === "network") {
         maxSeverity = Math.max(maxSeverity, 2);
-        return `${item.label}：连接失败 (${item.latencyMs}ms)`;
+        return `${itemLabel}：连接失败 (${item.latencyMs}ms)`;
       }
       maxSeverity = Math.max(maxSeverity, 1);
       const shortReason = {
@@ -633,7 +886,7 @@
         redirect: `HTTP ${r.httpStatus || 302}`,
         http: `HTTP ${r.httpStatus || "异常"}`
       }[r.reason] || "未确认";
-      return `${item.label}：${shortReason} (${item.latencyMs}ms)`;
+      return `${itemLabel}：${shortReason} (${item.latencyMs}ms)`;
     });
 
     const color = maxSeverity >= 2 ? "#FF3B30" : maxSeverity === 1 ? "#FF9500" : "#34C759";
@@ -654,6 +907,7 @@
 
   function runPanel(env) {
     let finished = false;
+    let finalizing = false;
     const finish = payload => {
       if (finished) return;
       finished = true;
@@ -678,14 +932,17 @@
 
     const states = cfg.targets.map(t => ({
       label: t.label,
+      customName: t.customName,
       policy: t.policy,
+      nodeName: null,
       done: false,
       latencyMs: 0,
       result: null
     }));
 
     function finalize() {
-      if (finished) return;
+      if (finished || finalizing) return;
+      finalizing = true;
       const nowMs = env.now();
       for (const s of states) {
         if (!s.done) {
@@ -694,12 +951,14 @@
           s.result = classify({ error: "timeout" });
         }
       }
-      const nowDate = env.makeDate(nowMs);
-      if (states.length === 1) {
-        finish(renderSingle(cfg, states[0], states[0].result, states[0].latencyMs, nowDate));
-      } else {
-        finish(renderMulti(cfg, states, nowDate));
-      }
+      resolveNodeNames(env, states, startTime, () => {
+        const renderDate = env.makeDate(env.now());
+        if (states.length === 1) {
+          finish(renderSingle(cfg, states[0], renderDate));
+        } else {
+          finish(renderMulti(cfg, states, renderDate));
+        }
+      });
     }
 
     env.setTimer(finalize, deadlineMs);
@@ -724,7 +983,7 @@
       }
 
       env.httpGet(request, (error, response, data) => {
-        if (finished || state.done) return;
+        if (finished || finalizing || state.done) return;
         state.done = true;
         state.latencyMs = Math.max(1, env.now() - startTime);
         state.result = classify({
@@ -752,6 +1011,7 @@
     extractRegion,
     classify,
     parseArguments,
+    unwrapPolicyName,
     runPanel
   };
 
@@ -768,7 +1028,15 @@
       now: () => Date.now(),
       makeDate: ms => new Date(ms),
       setTimer: (fn, ms) => setTimeout(fn, ms),
-      httpGet: (req, cb) => $httpClient.get(req, cb)
+      httpGet: (req, cb) => $httpClient.get(req, cb),
+      httpAPI:
+        typeof $httpAPI === "function"
+          ? (method, path, body, cb) => $httpAPI(method, path, body, cb)
+          : null,
+      selectGroupDetails:
+        typeof $surge === "object" && $surge && typeof $surge.selectGroupDetails === "function"
+          ? () => $surge.selectGroupDetails()
+          : null
     });
   }
 })(typeof globalThis === "object" ? globalThis : this);

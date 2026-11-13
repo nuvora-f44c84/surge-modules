@@ -19,7 +19,7 @@
 | 滴滴出行 · 广告过滤 | 0.1.0 · 清理首页横幅、顺风车/代驾弹窗及推荐目的地，取消钱包与导航白名单，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/DiDi-AdBlock-Lite.sgmodule) |
 | 盒马 · 广告与页面精简 | 0.1.0 · 精简首页、底栏、我的页面及推荐流，修复单页规则冲突，无脚本，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/Freshippo-AdBlock-Lite.sgmodule) |
 | YouTube · LLM 翻译字幕 | 0.1.0 · 自备后端、默认中文双语、重复中文去重，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-LLM-Captions.sgmodule) |
-| YouTube · Premium 解锁面板 | 0.1.0 · 当前分流或指定策略解锁检测、个人月费参考价、支持多策略对比，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-Premium-Panel.sgmodule) |
+| YouTube · Premium 解锁面板 | 0.1.1 · 当前分流或指定策略解锁检测、显示实际落地节点名称与个人月费参考价，无需 MITM，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/YouTube-Premium-Panel.sgmodule) |
 | 天气 · 美标 AQI（iRingo） | 0.1.1 · 官方 WeatherKit 脚本（本仓库 Raw 直供 + 每日自动巡检上游），美标 InstantCast，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-WeatherKit-US.sgmodule) |
 | 定位 · 地区检测（iRingo） | 0.1.0 · 官方远程脚本，仅网络地区检测，默认 US，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-LocationService-US.sgmodule) |
 | Siri 与聚焦搜索（iRingo） | 0.1.1 · 官方 Siri 脚本（本仓库 Raw 直供 + 每日自动巡检上游），解锁 Spotlight / 查询知识卡片并保持中文 Siri，移除 `debug=1`，测试版 | [模块 Raw 文件](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/modules/iRingo-Siri-Spotlight.sgmodule) |
@@ -121,7 +121,7 @@
 
 ## YouTube · Premium 解锁面板（测试版）
 
-远程面板模块（`0.1.0`），默认按当前 Surge 分流规则请求 `https://www.youtube.com/premium?hl=en`，无需填写策略名即可开箱即用；也支持在模块参数中指定单个策略组，或以英文逗号分隔最多 4 个策略同卡并发对比。
+远程面板模块（`0.1.1`），默认按当前 Surge 分流规则请求 `https://www.youtube.com/premium?hl=en`，并通过 Surge 内置 `$httpAPI` / `$surge` 自动解析实际落地的具体节点名称，无需填写策略名即可开箱即用；也支持在模块参数中指定单个策略组，或以英文逗号分隔最多 4 个策略同卡并发对比。
 
 与本仓库 `CF-AutoRank` 采用一致的正向完整权益校验（确认 `HTTP 200`、唯一有效的 `INNERTUBE_CONTEXT_GL` 地区代码及激活状态的完整 `SPunlimited` `/premium` 购买入口），同时提取公开的个人方案参考月费，并明确区分地区不支持、仅限 Premium Lite、国家无法验证与风控拦截。无需 MITM、无需重写、不携带 Cookie、不修改分流规则。参数与限制见 [YouTube 解锁面板说明](docs/youtube-premium-panel.md)。
 
