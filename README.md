@@ -28,7 +28,7 @@
 
 ## AI 统一分流规则集（`AI.list`）与 X 规则集（`X.list`）
 
-[AI.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI.list) 聚合了 Apple Intelligence（PCC 与地区资格校验）、OpenAI、Anthropic/Claude、Google Gemini/AI Studio/Antigravity/NotebookLM、xAI/Grok、Meta AI/Muse 及 Cursor/Windsurf/Copilot 等共 259 条去重规则，由 GitHub Actions 每日自动巡检上游 `Sukka ai.conf` 与 `apple_intelligence.conf`（自动剔除 `api.github.com` 误伤项与中文 Siri 核心直连域名）。主配置只需引用一行，放在国内 AI 直连（`cn.list`）之后、[X.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/X.list) 与 `Apple_All` 之前。原补充表 [`rules/AI-Supplement.list`](rules/AI-Supplement.list) 保留路径兼容。详见 [AI 统一规则集说明](docs/ai-list.md)。
+[AI.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/AI.list) 聚合了 Apple Intelligence（PCC 与地区资格校验）、OpenAI、Anthropic/Claude、Google Gemini/AI Studio/Antigravity/NotebookLM、xAI/Grok、Meta AI/Muse 及 Cursor/Windsurf/Copilot 等共 266 条去重规则，由 GitHub Actions 每日自动巡检上游 `Sukka ai.conf` 与 `apple_intelligence.conf`（自动剔除 `api.github.com` 误伤项与中文 Siri 核心直连域名）。主配置只需引用一行，放在国内 AI 直连（`cn.list`）之后、[X.list 固定地址](https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rules/X.list) 与 `Apple_All` 之前。原补充表 [`rules/AI-Supplement.list`](rules/AI-Supplement.list) 保留路径兼容。详见 [AI 统一规则集说明](docs/ai-list.md)。
 
 ## 阿里系核心业务直连规则集
 

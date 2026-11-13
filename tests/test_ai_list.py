@@ -66,11 +66,19 @@ class AIListTests(unittest.TestCase):
         must_cover = [
             # Apple Intelligence PCC & Geo
             "DOMAIN,gspe1-ssl.ls.apple.com",
+            "DOMAIN-SUFFIX,issuer.apple.com",
+            "DOMAIN-SUFFIX,ropes.apple.com",
+            "DOMAIN,mask-api.icloud.com",
+            "DOMAIN,mask.icloud.com",
+            "DOMAIN,mask-h2.icloud.com",
+            "DOMAIN-SUFFIX,app.apple.com",
+            "DOMAIN,ss-cleanup-proxy-prod.us-east-1m.app.apple.com",
             "DOMAIN-SUFFIX,apple-relay.apple.com",
             "DOMAIN-SUFFIX,apple-relay.cloudflare.com",
             "DOMAIN-SUFFIX,apple-relay.fastly-edge.com",
             "DOMAIN-SUFFIX,apple-relay.akamaized.net",
             "DOMAIN-SUFFIX,cp4.cloudflare.com",
+            "DOMAIN,lens.google.com",
             # OpenAI / Claude / Gemini / Antigravity / Grok / Muse
             "DOMAIN-SUFFIX,openai.com",
             "DOMAIN-SUFFIX,chatgpt.com",
