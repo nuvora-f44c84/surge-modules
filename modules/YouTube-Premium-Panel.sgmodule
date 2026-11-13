@@ -1,0 +1,16 @@
+#!name=YouTube · Premium 解锁面板
+#!desc=0.1.0 测试版。检测当前分流或指定策略下的 YouTube Premium 地区可用性与个人月费参考价；校验完整 SPunlimited 购买入口，区分仅限 Lite、国家未验证与风控拦截。无需 MITM 或重写，远程脚本自动加载。
+#!version=0.1.0
+#!category=YouTube
+#!homepage=https://github.com/nuvora-f44c84/surge-modules
+#!arguments=policy:auto,price:true,timeout:8,interval:3600,title:YouTube Premium
+#!arguments-desc=policy：检测使用的 Surge 策略或策略组；默认 auto 按当前分流规则自动匹配，也可填写已有策略名（如 YouTube），或用英文逗号分隔最多 4 个策略同卡对比（如 YouTube,DIRECT）。\nprice：true 在已解锁时显示个人方案参考月费，false 仅显示地区。\ntimeout：单次请求超时秒数（2–20），默认 8。\ninterval：面板自动刷新间隔秒数，默认 3600（1 小时）；填 -1 则仅手动刷新。\ntitle：面板标题前缀，默认 YouTube Premium。
+
+# 仅通过 $httpClient 请求公开页面 https://www.youtube.com/premium?hl=en，不携带 Cookie，不添加 MITM 或分流规则。
+# 参数、判定口径与限制见：docs/youtube-premium-panel.md
+
+[Script]
+YouTube-Premium-Panel = type=generic,timeout=25,engine=jsc,script-path=https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/scripts/YouTube-Premium-Panel.js,argument="_raw=1&timeout={{{timeout}}}&price={{{price}}}&title={{{title}}}&policy={{{policy}}}"
+
+[Panel]
+YouTube-Premium-Panel = script-name=YouTube-Premium-Panel,title="{{{title}}}",content="点击刷新检测 YouTube Premium 解锁状态",style=info,icon=play.rectangle.fill,icon-color=#FF2D55,update-interval={{{interval}}}
