@@ -288,3 +288,6 @@ DOMAIN-SUFFIX,you.com
 DOMAIN-SUFFIX,youmind.ai
 DOMAIN-SUFFIX,youmind.com
 DOMAIN-SUFFIX,youmind.site
+
+# Upstream Auto-Synced (Sukka AI / Apple Intelligence)
+DOMAIN,daily-cloudcode-pa.sandbox.googleapis.com
