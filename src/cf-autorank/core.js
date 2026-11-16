@@ -147,6 +147,10 @@ async function exitCountry(env,e,cfg,guard,geoCache=new Map()) {
   return {country,source:'ipify + Surge GeoIP / IPWhois',checkedAt:env.now(),samples,
     status:country?'verified':samples.every(s=>s.country)?'inconsistent':'unknown'};
 }
+function exitRegionFailure(row) {
+  if(row.egress.status!=='verified')return 'exitUnconfirmed';
+  return row.egress.country===row.premium.region?null:'exitMismatch';
+}
 async function exitNames(env,entries,cfg,guard,update,concurrency=1) {
   const observed=new Array(entries.length),geoCache=new Map();let done=0;await update('检测出口国家',0,entries.length);
   await pool(entries,concurrency,async(e,i)=>{observed[i]={...e,egress:await exitCountry(env,e,cfg,guard,geoCache)};await update('检测出口国家',++done,entries.length);});
@@ -577,7 +581,7 @@ async function execute(env,opts,pools,poolInfo=null) {
   const downloadEntries=light.downloads;
   assert(downloadEntries.length>=10,'有效下载候选不足 10 个，保留原订阅');
   progress.downloadCandidateCount=downloadEntries.length;
-  progress.premium={tested:0,eligible:0,passed:0,unavailable:0,unknown:0,inconsistent:0,verified:0,refreshed:0,recoveryAttempts:0,recovered:0,bytes:0,
+  progress.premium={tested:0,eligible:0,passed:0,unavailable:0,unknown:0,inconsistent:0,verified:0,refreshed:0,recoveryAttempts:0,recovered:0,exitMismatch:0,exitUnconfirmed:0,bytes:0,
     preflight:{total:0,tested:0,passed:0,unavailable:0,unknown:0,reserveTested:0,notNeeded:0,skippedDownloads:0,reused:0,refreshed:0,ranked:true}};
   progress.premiumFinalFailures=[];
   // A Premium landing page is far larger than a 128 KiB screen sample, so the
@@ -672,11 +676,22 @@ async function execute(env,opts,pools,poolInfo=null) {
     progress.premium.eligible++;
     return await stableOne({...e,premium:result});
   }
-  async function qualifyingBatch(rows,stage,offset=0,total=rows.length) {
+  const geoCache=new Map();
+  async function qualifyReserveBatch(rows,stage,offset=0,total=rows.length) {
     const checked=new Array(rows.length);let done=0;
     await update(stage,offset,total);
     await pool(rows,4,async(e,i)=>{
-      checked[i]=await qualifyOne(e);
+      const row=await qualifyOne(e);
+      checked[i]=row;
+      if(row && row.valid) {
+        // Discard mismatched reserves before they consume a full download slot.
+        row.egress=await exitCountry(env,row,baseline.cfg,guard,geoCache);
+        const issue=exitRegionFailure(row);
+        if(issue) {
+          progress.premium[issue]++;
+          checked[i]=null;
+        }
+      }
       await update(stage,offset+(++done),total);
     });
     return checked.filter(Boolean);
@@ -752,7 +767,7 @@ async function execute(env,opts,pools,poolInfo=null) {
       if(progress.supplement.refined>=mode.reserveFinalists){progress.supplement.limited=true;await update('后备 Premium 与稳定性检查',progress.supplement.examined,reserves.length);break;}
       const size=Math.min(4,10-selected.length,mode.reserveFinalists-progress.supplement.refined);
       const batch=reserves.slice(nextReserve,nextReserve+size);nextReserve+=batch.length;
-      const checked=await qualifyingBatch(batch,'后备 Premium 与稳定性检查',progress.supplement.examined,reserves.length);
+      const checked=await qualifyReserveBatch(batch,'后备 Premium 与稳定性检查',progress.supplement.examined,reserves.length);
       progress.supplement.examined+=batch.length;progress.supplement.eligible+=checked.length;
       progress.supplement.refined+=checked.length;
       progress.supplement.failedRefine+=checked.filter(e=>!e.valid).length;
@@ -773,11 +788,10 @@ async function execute(env,opts,pools,poolInfo=null) {
     '综合检查合格 '+selected.length+'/10，'+(progress.supplement.limited?'补选复测达到上限':'后备候选已用尽')+'，保留原订阅；具体原因见下载与 Premium 诊断');
   selectRanking();
   selected.forEach(e=>initialFinalIPs.add(e.ip));
-  const geoCache=new Map();
   progress.finalSelection={rounds:0,examined:0,rejected:0,expired:0,replacementChecks:0,replacements:0,resumedDownloads:0};
   let lastFinalError=null;
   function failureText(issue) {
-    const labels={network_timeout:'请求超时',network:'连接失败',region_unavailable:'所在地区明确不支持 Premium',
+    const labels={exitMismatch:'出口地区与 YouTube Premium 地区不一致',exitUnconfirmed:'两次出口检测未确认同一地区',network_timeout:'请求超时',network:'连接失败',region_unavailable:'所在地区明确不支持 Premium',
       challenge:'遇到验证或同意页面',body:'响应正文不完整或异常',page_format:'无法识别页面结构',
       region_unknown:'无法确认地区',country_unverified:'YouTube 无法验证出口国家',no_full_premium_offer:'页面未确认完整 Premium 服务',
       region_changed:'地区前后不一致',expired:'检测记录已超过 10 分钟',future_time:'检测时间晚于当前时间',
@@ -874,7 +888,9 @@ async function execute(env,opts,pools,poolInfo=null) {
     await pool(targets,4,async({e,index})=>{
       progress.finalSelection.examined++;
       if(!initialFinalIPs.has(e.ip))progress.finalSelection.replacementChecks++;
-      const row={...e,premium:{...e.premium,samples:e.premium.samples.slice()},egress:await exitCountry(env,e,baseline.cfg,guard,geoCache)};
+      const recentExit=e.egress && e.egress.checkedAt<=env.now() && env.now()-e.egress.checkedAt<=premium.MAX_AGE/2;
+      const row={...e,premium:{...e.premium,samples:e.premium.samples.slice()},
+        egress:recentExit?e.egress:await exitCountry(env,e,baseline.cfg,guard,geoCache)};
       if(row.premium.samples.some(s=>env.now()-s.checkedAt>premium.MAX_AGE/2)) {
         const result=await premiumPair(row);
         if(result.status!=='available') {
@@ -883,11 +899,18 @@ async function execute(env,opts,pools,poolInfo=null) {
         }
         row.premium=result;progress.premium.refreshed++;
       }
-      if(await finishPremium(row,index))observed.set(e.ip,row);else rejectFinal(e);
+      const exitIssue=exitRegionFailure(row);
+      if(exitIssue) {
+        progress.premium[exitIssue]++;
+        await recordFinalFailure(row,index,'final',{reason:exitIssue,exitRegion:row.egress.country,regions:[row.premium.region]});
+        rejectFinal(e);
+      } else if(await finishPremium(row,index))observed.set(e.ip,row);
+      else rejectFinal(e);
       selectRanking();await update('出口与 Premium 最终复核',progress.premium.verified,10);
     });
   }
   const expectedNames=namedEntries(selected.map(e=>observed.get(e.ip)));
+  assert(expectedNames.every(e=>!exitRegionFailure(e)),'出口地区与 Premium 地区未核对通过，保留原订阅');
   const proposed=expectedNames.map(e=>e.key+'#'+e.name).join('\n');
   await guard();await update('发布前核对',0,1);
   const fresh=await snapshot();

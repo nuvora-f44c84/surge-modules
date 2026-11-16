@@ -32,6 +32,8 @@ function scenario(options={}) {
   const e={key,kind,rank:r,ordinal,stage,startedAt:f.env.now()};events.push(e);
   try {
    await Promise.resolve();const response=await probe(spec);
+   if(kind==='exit'&&options.exitReply)return options.exitReply(r,ordinal,response);
+   if(kind==='premium'&&options.premiumRegion)return {...response,data:page({region:options.premiumRegion(r,stage)})};
    if(kind==='screen')return {...response,ms:100+r*10};
    if(kind==='full') {
     if(ordinal===2&&options.invalidSecond&&options.invalidSecond.has(r))return {...response,status:503,bytes:0};
@@ -48,7 +50,7 @@ function scenario(options={}) {
 }
 function selectedRanks(r,f){return r.selected.map(e=>[...f.rank].find(([key])=>key.startsWith('CF-Probe-'+e.ip+'-'+e.port+' ='))[1]);}
 function quality(r,f) {
- assert(r.verified);assert.equal(r.selected.length,10);assert.equal(new Set(r.selected.map(e=>e.ip)).size,10);
+ assert(r.verified);assert(r.selected.every(e=>e.egress.status==='verified'&&e.egress.country===e.premium.region));assert.equal(r.selected.length,10);assert.equal(new Set(r.selected.map(e=>e.ip)).size,10);
  assert.equal(r.candidateCount,1280);assert.equal(r.downloadCandidateCount,160);assert.equal(r.downloadTestedCount,160);
  assert(r.selected.every(e=>P.qualified(e.premium,f.env.now())&&e.samples.length===2&&e.samples.every(s=>s.valid)&&e.score===Math.min(...e.samples.map(s=>s.mbps))));
  assert.equal(f.posts.length,1);assert.equal(r.premium.verified,10);assert.equal(f.metrics().active,0);assert.equal(f.metrics().fullActive,0);
@@ -167,4 +169,35 @@ test('deterministic subsets of failed candidates match an independent speed rank
   const expected=Array.from({length:24},(_,i)=>i).filter(i=>!denied.has(i)).slice(0,10);
   assert.deepEqual(selectedRanks(r,f),expected);
  }
+});
+
+test('mismatched finalists and reserves are skipped until ten matching nodes are found beyond the reserve retest budget',async()=>{
+ const f=scenario({premiumRegion:rank=>rank<52?'US':'HK'});
+ f.env.geoip=()=>'HK';
+ const r=await C.execute(f.env,f.opts,pools);quality(r,f);
+ assert.deepEqual(selectedRanks(r,f),Array.from({length:10},(_,i)=>52+i));
+ assert.equal(r.premium.exitMismatch,52);assert.equal(r.premium.exitUnconfirmed,0);
+ assert.equal(r.supplement.refined,10);
+ assert(!f.events.some(e=>e.kind==='full'&&e.rank>=24&&e.rank<52));
+ assert(r.selected.every(e=>e.name.startsWith('【🇭🇰】')));
+ const issue=r.premiumFinalFailures.find(d=>d.reason==='exitMismatch');
+ assert.equal(issue.exitRegion,'HK');assert.deepEqual(issue.regions,['US']);assert(issue.discarded);
+});
+test('unknown and disagreeing exit observations cannot fill the tenth slot',async()=>{
+ const f=scenario({exitReply:(rank,ordinal,response)=>{
+   if(rank<9)return response;
+   if(rank%2===0)return {...response,error:'timeout'};
+   return {...response,data:JSON.stringify({ip:ordinal===1?'8.8.4.4':'8.8.8.8'})};
+ }});
+ f.env.geoip=ip=>ip==='8.8.4.4'?'US':'HK';
+ await assert.rejects(()=>C.execute(f.env,f.opts,pools),/复核补位不足 10 个/);
+ const p=f.progress.at(-1);assert.equal(p.premium.verified,9);assert.equal(p.premium.exitUnconfirmed,151);
+ assert.equal(p.supplement.refined,0);assert.equal(f.posts.length,0);assert.equal(f.getList(),f.original);
+});
+test('fresh Premium evidence is compared again if its region changes during final refresh',async()=>{
+ const f=scenario({oldPairs:true,premiumRegion:(rank,stage)=>rank===0&&stage==='出口与 Premium 最终复核'?'JP':'US'});
+ const r=await C.execute(f.env,f.opts,pools);quality(r,f);
+ assert.deepEqual(selectedRanks(r,f),Array.from({length:10},(_,i)=>i+1));
+ assert.equal(r.premium.exitMismatch,1);assert.equal(r.premiumFinalFailures[0].exitRegion,'US');
+ assert.deepEqual(r.premiumFinalFailures[0].regions,['JP']);
 });

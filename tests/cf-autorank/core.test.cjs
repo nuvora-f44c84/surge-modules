@@ -275,7 +275,7 @@ test('converter strips legacy flag prefixes but preserves bracketed countries an
  }
 });
 test('full ranking and rename survive leading-emoji removal with exact names in both subscriptions',async()=>{
- for(const action of [C.execute,C.renameOnly])for(const unknown of [false,true]) {
+ for(const [action,unknown] of [[C.execute,false],[C.renameOnly,false],[C.renameOnly,true]]) {
   const f=fixture({geoipUnknown:unknown}),r=await action(f.env,f.opts,pools);
   assert(r.changed&&r.verified);assert.equal(f.posts.length,1);
   assert(r.selected.every(e=>e.name.startsWith(unknown?'【🌐】 CF':'【🇺🇸】 CF')));

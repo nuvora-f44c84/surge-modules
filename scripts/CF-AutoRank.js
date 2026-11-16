@@ -1,4 +1,4 @@
-// CF AutoRank v0.1.23. Credentials are entered by the user; never bundle secrets.
+// CF AutoRank v0.1.24. Credentials are entered by the user; never bundle secrets.
 (function(root) {
 'use strict';
 const MAX_HTML=2500000;
@@ -288,6 +288,10 @@ async function exitCountry(env,e,cfg,guard,geoCache=new Map()) {
   const country=samples.every(s=>s.country&&s.country===samples[0].country)?samples[0].country:null;
   return {country,source:'ipify + Surge GeoIP / IPWhois',checkedAt:env.now(),samples,
     status:country?'verified':samples.every(s=>s.country)?'inconsistent':'unknown'};
+}
+function exitRegionFailure(row) {
+  if(row.egress.status!=='verified')return 'exitUnconfirmed';
+  return row.egress.country===row.premium.region?null:'exitMismatch';
 }
 async function exitNames(env,entries,cfg,guard,update,concurrency=1) {
   const observed=new Array(entries.length),geoCache=new Map();let done=0;await update('检测出口国家',0,entries.length);
@@ -719,7 +723,7 @@ async function execute(env,opts,pools,poolInfo=null) {
   const downloadEntries=light.downloads;
   assert(downloadEntries.length>=10,'有效下载候选不足 10 个，保留原订阅');
   progress.downloadCandidateCount=downloadEntries.length;
-  progress.premium={tested:0,eligible:0,passed:0,unavailable:0,unknown:0,inconsistent:0,verified:0,refreshed:0,recoveryAttempts:0,recovered:0,bytes:0,
+  progress.premium={tested:0,eligible:0,passed:0,unavailable:0,unknown:0,inconsistent:0,verified:0,refreshed:0,recoveryAttempts:0,recovered:0,exitMismatch:0,exitUnconfirmed:0,bytes:0,
     preflight:{total:0,tested:0,passed:0,unavailable:0,unknown:0,reserveTested:0,notNeeded:0,skippedDownloads:0,reused:0,refreshed:0,ranked:true}};
   progress.premiumFinalFailures=[];
   // A Premium landing page is far larger than a 128 KiB screen sample, so the
@@ -814,11 +818,22 @@ async function execute(env,opts,pools,poolInfo=null) {
     progress.premium.eligible++;
     return await stableOne({...e,premium:result});
   }
-  async function qualifyingBatch(rows,stage,offset=0,total=rows.length) {
+  const geoCache=new Map();
+  async function qualifyReserveBatch(rows,stage,offset=0,total=rows.length) {
     const checked=new Array(rows.length);let done=0;
     await update(stage,offset,total);
     await pool(rows,4,async(e,i)=>{
-      checked[i]=await qualifyOne(e);
+      const row=await qualifyOne(e);
+      checked[i]=row;
+      if(row && row.valid) {
+        // Discard mismatched reserves before they consume a full download slot.
+        row.egress=await exitCountry(env,row,baseline.cfg,guard,geoCache);
+        const issue=exitRegionFailure(row);
+        if(issue) {
+          progress.premium[issue]++;
+          checked[i]=null;
+        }
+      }
       await update(stage,offset+(++done),total);
     });
     return checked.filter(Boolean);
@@ -894,7 +909,7 @@ async function execute(env,opts,pools,poolInfo=null) {
       if(progress.supplement.refined>=mode.reserveFinalists){progress.supplement.limited=true;await update('后备 Premium 与稳定性检查',progress.supplement.examined,reserves.length);break;}
       const size=Math.min(4,10-selected.length,mode.reserveFinalists-progress.supplement.refined);
       const batch=reserves.slice(nextReserve,nextReserve+size);nextReserve+=batch.length;
-      const checked=await qualifyingBatch(batch,'后备 Premium 与稳定性检查',progress.supplement.examined,reserves.length);
+      const checked=await qualifyReserveBatch(batch,'后备 Premium 与稳定性检查',progress.supplement.examined,reserves.length);
       progress.supplement.examined+=batch.length;progress.supplement.eligible+=checked.length;
       progress.supplement.refined+=checked.length;
       progress.supplement.failedRefine+=checked.filter(e=>!e.valid).length;
@@ -915,11 +930,10 @@ async function execute(env,opts,pools,poolInfo=null) {
     '综合检查合格 '+selected.length+'/10，'+(progress.supplement.limited?'补选复测达到上限':'后备候选已用尽')+'，保留原订阅；具体原因见下载与 Premium 诊断');
   selectRanking();
   selected.forEach(e=>initialFinalIPs.add(e.ip));
-  const geoCache=new Map();
   progress.finalSelection={rounds:0,examined:0,rejected:0,expired:0,replacementChecks:0,replacements:0,resumedDownloads:0};
   let lastFinalError=null;
   function failureText(issue) {
-    const labels={network_timeout:'请求超时',network:'连接失败',region_unavailable:'所在地区明确不支持 Premium',
+    const labels={exitMismatch:'出口地区与 YouTube Premium 地区不一致',exitUnconfirmed:'两次出口检测未确认同一地区',network_timeout:'请求超时',network:'连接失败',region_unavailable:'所在地区明确不支持 Premium',
       challenge:'遇到验证或同意页面',body:'响应正文不完整或异常',page_format:'无法识别页面结构',
       region_unknown:'无法确认地区',country_unverified:'YouTube 无法验证出口国家',no_full_premium_offer:'页面未确认完整 Premium 服务',
       region_changed:'地区前后不一致',expired:'检测记录已超过 10 分钟',future_time:'检测时间晚于当前时间',
@@ -1016,7 +1030,9 @@ async function execute(env,opts,pools,poolInfo=null) {
     await pool(targets,4,async({e,index})=>{
       progress.finalSelection.examined++;
       if(!initialFinalIPs.has(e.ip))progress.finalSelection.replacementChecks++;
-      const row={...e,premium:{...e.premium,samples:e.premium.samples.slice()},egress:await exitCountry(env,e,baseline.cfg,guard,geoCache)};
+      const recentExit=e.egress && e.egress.checkedAt<=env.now() && env.now()-e.egress.checkedAt<=premium.MAX_AGE/2;
+      const row={...e,premium:{...e.premium,samples:e.premium.samples.slice()},
+        egress:recentExit?e.egress:await exitCountry(env,e,baseline.cfg,guard,geoCache)};
       if(row.premium.samples.some(s=>env.now()-s.checkedAt>premium.MAX_AGE/2)) {
         const result=await premiumPair(row);
         if(result.status!=='available') {
@@ -1025,11 +1041,18 @@ async function execute(env,opts,pools,poolInfo=null) {
         }
         row.premium=result;progress.premium.refreshed++;
       }
-      if(await finishPremium(row,index))observed.set(e.ip,row);else rejectFinal(e);
+      const exitIssue=exitRegionFailure(row);
+      if(exitIssue) {
+        progress.premium[exitIssue]++;
+        await recordFinalFailure(row,index,'final',{reason:exitIssue,exitRegion:row.egress.country,regions:[row.premium.region]});
+        rejectFinal(e);
+      } else if(await finishPremium(row,index))observed.set(e.ip,row);
+      else rejectFinal(e);
       selectRanking();await update('出口与 Premium 最终复核',progress.premium.verified,10);
     });
   }
   const expectedNames=namedEntries(selected.map(e=>observed.get(e.ip)));
+  assert(expectedNames.every(e=>!exitRegionFailure(e)),'出口地区与 Premium 地区未核对通过，保留原订阅');
   const proposed=expectedNames.map(e=>e.key+'#'+e.name).join('\n');
   await guard();await update('发布前核对',0,1);
   const fresh=await snapshot();
@@ -1270,7 +1293,7 @@ function mainContent(s,mode) {
     +networkText(last.network)+' · '+(last.mode==='full'?'完整':'省流')+' · '+Math.round((last.bytes+(last.premiumBytes||0))/1000000)+' MB';
 }
 function progressContent(s,now) {
-  if(!s.stage)return 'v0.1.23 已加载 · 尚未开始\n点击上方面板运行完整优选';
+  if(!s.stage)return 'v0.1.24 已加载 · 尚未开始\n点击上方面板运行完整优选';
   const premium=s.premium||s.result&&s.result.premium;
   const light=s.lightScreen||s.result&&s.result.lightScreen;
   const finalSelection=s.finalSelection||s.result&&s.result.finalSelection;
@@ -1341,7 +1364,7 @@ const PROGRESS_WRITE_MS=750;
 const started=Date.now();
 const localNetwork=typeof $network==='object'?$network:{};
 const network=ui.networkInfo(localNetwork),networkLabel=ui.networkText(network);
-const UA='CF-Edge-AutoRank/0.1.23';
+const UA='CF-Edge-AutoRank/0.1.24';
 console.log(UA+' · '+(typeof $trigger==='string'?$trigger:'manual'));
 function read(key=stateKey){
   const begin=Date.now();storageDiagnostics.reads++;
@@ -1381,7 +1404,7 @@ function done(title,content,error,notify) {
 }
 function premiumFailureText(value){
   if(!value||typeof value!=='object')return null;
-  const reasons={network_timeout:'请求超时',network:'连接失败',http:'HTTP 响应异常',region_unavailable:'地区不可用',country_unverified:'YouTube 无法验证出口国家',challenge:'出现验证页面',body:'正文不完整或异常',page_format:'页面格式未确认',region_unknown:'地区未确认',no_full_premium_offer:'未确认完整 Premium 购买入口',region_changed:'地区发生变化',expired:'检测记录过期',future_time:'检测时间晚于当前时间',invalid_time:'检测时间无效',incomplete:'检测记录不完整'};
+  const reasons={exitMismatch:'出口与 YouTube Premium 地区不一致',exitUnconfirmed:'两次出口检测未确认同一地区',network_timeout:'请求超时',network:'连接失败',http:'HTTP 响应异常',region_unavailable:'地区不可用',country_unverified:'YouTube 无法验证出口国家',challenge:'出现验证页面',body:'正文不完整或异常',page_format:'页面格式未确认',region_unknown:'地区未确认',no_full_premium_offer:'未确认完整 Premium 购买入口',region_changed:'地区发生变化',expired:'检测记录过期',future_time:'检测时间晚于当前时间',invalid_time:'检测时间无效',incomplete:'检测记录不完整'};
   const candidate=Number.isInteger(value.candidate)&&value.candidate>=1&&value.candidate<=10?value.candidate:'?';
   const phase=value.phase==='refresh'?'更新检测':value.phase==='final'?'发布前复核':'检测';
   const attempt=value.attempt==='recovery'?'恢复复测':'首次';
@@ -1391,7 +1414,10 @@ function premiumFailureText(value){
   if(Number.isInteger(value.httpStatus)&&value.httpStatus>=100&&value.httpStatus<=599)lines.push('HTTP '+value.httpStatus);
   if(value.networkError==='timeout')lines.push('网络超时');else if(value.networkError==='connection')lines.push('连接错误');
   const regions=Array.isArray(value.regions)?value.regions.filter(x=>typeof x==='string'&&/^[A-Z]{2}$/.test(x)).slice(0,3):[];
-  if(regions.length)lines.push('地区 '+regions.join(' → '));
+  if(value.reason==='exitMismatch'||value.reason==='exitUnconfirmed') {
+    const exit=/^[A-Z]{2}$/.test(value.exitRegion||'')?value.exitRegion:'未确认';
+    lines.push('出口 '+exit+' / YouTube '+(regions[0]||'未确认'));
+  } else if(regions.length)lines.push('地区 '+regions.join(' → '));
   if(Number.isFinite(value.oldestAgeMs)&&value.oldestAgeMs>=0)lines.push('最早记录 '+Math.round(value.oldestAgeMs/1000)+'秒前');
   if(value.recovered===true)lines.push('已恢复');else if(value.recoveryAttempted===true)lines.push('已尝试恢复');
   if(value.discarded===true)lines.push('本轮已淘汰');
@@ -1415,6 +1441,7 @@ function statusText(s){
   if(premium&&premium.eligible!==undefined)lines.push('Premium 预检：'+premium.eligible+'/'+premium.tested+' 个通过');
   if(premium)lines.push('综合入选：'+premium.passed+'/10 · Premium 发布前复核 '+premium.verified+'/10 · 检测正文约 '+(premium.bytes/1000000).toFixed(1)+' MB');
   if(premium)lines.push('Premium 未入选：地区不可用 '+premium.unavailable+' · 未确认 '+premium.unknown+' · 地区不一致 '+premium.inconsistent);
+  if(premium && Number.isInteger(premium.exitMismatch))lines.push('出口地区筛选：与 Premium 不同 '+premium.exitMismatch+' 个 · 出口未确认 '+premium.exitUnconfirmed+' 个');
   const stability=s.stability||s.result&&s.result.stability;
   if(stability)lines.push('稳定性检查：通过 '+stability.passed+'/'+stability.tested+' · 未通过 '+stability.failed);
   const downloads=s.downloadDiagnostics||s.result&&s.result.downloadDiagnostics;
