@@ -31,13 +31,15 @@ class AIListTests(unittest.TestCase):
         cls.exact_set = set()
         for r in cls.ai_rules:
             rtype, rval = r.split(",", 1)
-            cls.exact_set.add(f"{rtype},{rval.lower()}" if rtype != "URL-REGEX" else r)
+            cls.exact_set.add(
+                r if rtype in ("URL-REGEX", "PROCESS-NAME") else f"{rtype},{rval.lower()}"
+            )
             if rtype == "DOMAIN-SUFFIX":
                 cls.suffixes.add(rval.lower())
 
     def assertRuleCovered(self, rule: str):
         rtype, rval = rule.split(",", 1)
-        key = f"{rtype},{rval.lower()}" if rtype != "URL-REGEX" else rule
+        key = rule if rtype in ("URL-REGEX", "PROCESS-NAME") else f"{rtype},{rval.lower()}"
         if key in self.exact_set:
             return
         if rtype in ("DOMAIN", "DOMAIN-SUFFIX"):
@@ -54,7 +56,14 @@ class AIListTests(unittest.TestCase):
             rtype, rval = r.split(",", 1)
             self.assertIn(
                 rtype,
-                {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-WILDCARD", "URL-REGEX"},
+                {
+                    "DOMAIN",
+                    "DOMAIN-SUFFIX",
+                    "DOMAIN-KEYWORD",
+                    "DOMAIN-WILDCARD",
+                    "URL-REGEX",
+                    "PROCESS-NAME",
+                },
             )
             if rtype != "URL-REGEX":
                 self.assertNotIn(",", rval, f"Unexpected policy column in ruleset line: {r}")
@@ -87,7 +96,18 @@ class AIListTests(unittest.TestCase):
             "DOMAIN-SUFFIX,claude.ai",
             "DOMAIN-SUFFIX,gemini.google.com",
             "DOMAIN-SUFFIX,antigravity.google",
-            "DOMAIN,antigravity-pa.googleapis.com",
+            "DOMAIN-SUFFIX,antigravity-pa.googleapis.com",
+            "DOMAIN-KEYWORD,antigravity",
+            "DOMAIN-SUFFIX,auth.cloud.google",
+            "DOMAIN-SUFFIX,agent-plugins.org",
+            "DOMAIN-SUFFIX,daily-cloudcode-pa.googleapis.com",
+            "DOMAIN-SUFFIX,cloudcode-pa.googleapis.com",
+            "DOMAIN-SUFFIX,aicode.googleapis.com",
+            "DOMAIN-SUFFIX,cloudaicompanion.googleapis.com",
+            "PROCESS-NAME,Antigravity",
+            "PROCESS-NAME,Antigravity Helper*",
+            "PROCESS-NAME,/Applications/Antigravity.app/*",
+            "PROCESS-NAME,*/Antigravity.app/*",
             "DOMAIN-SUFFIX,grok.com",
             "DOMAIN-SUFFIX,x.ai",
             "DOMAIN-SUFFIX,grok.x.com",

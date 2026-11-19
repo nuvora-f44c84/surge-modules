@@ -84,23 +84,32 @@ DOMAIN-SUFFIX,generativelanguage.googleapis.com
 DOMAIN-SUFFIX,antigravity.google
 DOMAIN-SUFFIX,antigravity.google.com
 DOMAIN-SUFFIX,antigravity-unleash.goog
-DOMAIN,antigravity.googleapis.com
-DOMAIN,antigravity-pa.googleapis.com
+DOMAIN-SUFFIX,antigravity.googleapis.com
+DOMAIN-SUFFIX,antigravity-pa.googleapis.com
+DOMAIN-KEYWORD,antigravity
+DOMAIN-SUFFIX,auth.cloud.google
+DOMAIN-SUFFIX,agent-plugins.org
 DOMAIN-SUFFIX,cloudcode-pa.googleapis.com
-DOMAIN,daily-cloudcode-pa.googleapis.com
-DOMAIN,cloudaicompanion.googleapis.com
+DOMAIN-SUFFIX,daily-cloudcode-pa.googleapis.com
+DOMAIN-SUFFIX,daily-cloudcode-pa.sandbox.googleapis.com
+DOMAIN-SUFFIX,autopush-cloudcode-pa.sandbox.googleapis.com
+DOMAIN-SUFFIX,preprod-daily-cloudcode-pa.sandbox.googleapis.com
+DOMAIN-SUFFIX,cloudaicompanion.googleapis.com
 DOMAIN-SUFFIX,geller-pa.googleapis.com
 DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
 DOMAIN,alkalicore-pa.clients6.google.com
 DOMAIN-SUFFIX,notebooklm.google
 DOMAIN-SUFFIX,notebooklm.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
+DOMAIN-SUFFIX,alkalimakersuiteapplets.pa.googleapis.com
 DOMAIN,geminiweb-pa.clients.google.com
 DOMAIN,geminiweb-pa.clients6.google.com
 DOMAIN,notebooklm-pa.googleapis.com
 DOMAIN,notebooklm.googleapis.com
 DOMAIN,webchannel-alkalimakersuite-pa.clients6.google.com
 DOMAIN-SUFFIX,aicode.googleapis.com
+DOMAIN-SUFFIX,autopush-aicode.sandbox.googleapis.com
+DOMAIN-SUFFIX,preprod-aicode.sandbox.googleapis.com
 DOMAIN-SUFFIX,aida.googleapis.com
 DOMAIN-SUFFIX,aisandbox-pa.googleapis.com
 DOMAIN-SUFFIX,flow.google
@@ -119,6 +128,10 @@ DOMAIN-SUFFIX,stitch.withgoogle.com
 DOMAIN,lens.google.com
 DOMAIN-KEYWORD,alkalimakersuite-pa.clients6.google.com
 URL-REGEX,https://www\.google\.com/.*continue=https://gemini\.google\.com.+
+PROCESS-NAME,Antigravity
+PROCESS-NAME,Antigravity Helper*
+PROCESS-NAME,/Applications/Antigravity.app/*
+PROCESS-NAME,*/Antigravity.app/*
 
 # xAI / Grok
 DOMAIN-SUFFIX,x.ai
@@ -288,6 +301,3 @@ DOMAIN-SUFFIX,you.com
 DOMAIN-SUFFIX,youmind.ai
 DOMAIN-SUFFIX,youmind.com
 DOMAIN-SUFFIX,youmind.site
-
-# Upstream Auto-Synced (Sukka AI / Apple Intelligence)
-DOMAIN,daily-cloudcode-pa.sandbox.googleapis.com

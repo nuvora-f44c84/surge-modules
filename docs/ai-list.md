@@ -30,7 +30,7 @@ RULE-SET,https://raw.githubusercontent.com/nuvora-f44c84/surge-modules/main/rule
   1. `Apple Intelligence (PCC & Geo-Eligibility)`
   2. `OpenAI / ChatGPT / Sora / Codex`（含 `openai.sufy.com`）
   3. `Anthropic / Claude / MCP`
-  4. `Google AI / Gemini / AI Studio / Antigravity`（含 NotebookLM、Jules、Cloud Code）
+  4. `Google AI / Gemini / AI Studio / Antigravity`（含 NotebookLM、Jules、Cloud Code、Antigravity 自动更新/插件市场/OAuth 域名及 macOS 客户端全进程 `PROCESS-NAME` 规则）
   5. `xAI / Grok`
   6. `Meta AI & Muse`
   7. `AI Coding & Developer Tools`（Cursor、Windsurf、Copilot 等，**已自动剔除 `api.github.com` 误伤规则**，主配置无需再写 `AND/NOT` 嵌套）

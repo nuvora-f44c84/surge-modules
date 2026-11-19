@@ -34,6 +34,7 @@ ALLOWED_TYPES = {
     "DOMAIN-KEYWORD",
     "DOMAIN-WILDCARD",
     "URL-REGEX",
+    "PROCESS-NAME",
 }
 
 FORBIDDEN_EXACT_VALUES = {
@@ -91,7 +92,11 @@ def fetch_text(url: str) -> str:
 def is_safe_rule(rtype: str, rval: str) -> bool:
     if rtype not in ALLOWED_TYPES:
         return False
-    if not rval or any(ch in rval for ch in ("\r", "\n", " ")):
+    if not rval or any(ch in rval for ch in ("\r", "\n")):
+        return False
+    if rtype == "PROCESS-NAME":
+        return rval == rval.strip() and "," not in rval
+    if " " in rval:
         return False
     if rtype == "URL-REGEX":
         return True
@@ -152,7 +157,11 @@ def build_list(offline: bool = False) -> tuple[str, list[str]]:
             rtype, rval = rule.split(",", 1)
             if not is_safe_rule(rtype, rval):
                 raise RuntimeError(f"Unsafe rule in base sections: {rule}")
-            key = f"{rtype},{rval}" if rtype == "URL-REGEX" else f"{rtype},{rval.lower()}"
+            key = (
+                f"{rtype},{rval}"
+                if rtype in ("URL-REGEX", "PROCESS-NAME")
+                else f"{rtype},{rval.lower()}"
+            )
             if key in seen_keys:
                 continue
             seen_keys.add(key)
@@ -169,7 +178,11 @@ def build_list(offline: bool = False) -> tuple[str, list[str]]:
             fetched_candidates.extend(parse_rules(fetch_text(url)))
 
         for rtype, rval in fetched_candidates:
-            key = f"{rtype},{rval}" if rtype == "URL-REGEX" else f"{rtype},{rval.lower()}"
+            key = (
+                f"{rtype},{rval}"
+                if rtype in ("URL-REGEX", "PROCESS-NAME")
+                else f"{rtype},{rval.lower()}"
+            )
             if key in seen_keys:
                 continue
             if rtype in ("DOMAIN", "DOMAIN-SUFFIX") and is_covered_by_suffix(
